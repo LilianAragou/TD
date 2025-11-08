@@ -7,6 +7,11 @@ public class PojectileController : MonoBehaviour
     public float speed;
     void Update()
     {
+        if (target == null)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Vector3 direction = target.position - transform.position;
         direction.z = 0;
         direction.Normalize();
@@ -22,6 +27,7 @@ public class PojectileController : MonoBehaviour
                 enemyHealth.TakeDamage(damage);
             }
             Destroy(gameObject);
+            return;
         }
     }
 }

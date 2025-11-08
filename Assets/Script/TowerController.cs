@@ -7,7 +7,6 @@ public class TowerController : MonoBehaviour
     [SerializeField] private float attackDamage = 10f;
     [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private float projectileSpeed = 10f;
-    public GameObject nexus;
     private float cooldownTime = 0f;
     private Transform target;
     public string enemyTag = "Enemy";
@@ -47,7 +46,7 @@ public class TowerController : MonoBehaviour
 
     void OnMouseEnter()
     {
-        rangeaura.transform.localScale = new Vector3(attackRange, attackRange, 1);
+        rangeaura.transform.localScale = new Vector3(attackRange * 4 / transform.localScale.x, attackRange * 4 / transform.localScale.y, 1);
         rangeaura.SetActive(true);
     }
     
@@ -67,7 +66,7 @@ public class TowerController : MonoBehaviour
             float distToMe = Vector3.Distance(transform.position, e.transform.position);
             if (distToMe > attackRange)
                 continue;
-            float distToNexus = Vector3.Distance(nexus.transform.position, e.transform.position);
+            float distToNexus = Vector3.Distance(Vector3.zero, e.transform.position);
             if (distToNexus < bestDistToNexus)
             {
                 bestDistToNexus = distToNexus;
@@ -83,7 +82,7 @@ public class TowerController : MonoBehaviour
         {
             GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
             PojectileController pojectileController = bullet.GetComponent<PojectileController>();
-            pojectileController.target=target;
+            pojectileController.target = target;
             pojectileController.damage = attackDamage;
             pojectileController.speed = projectileSpeed;
         }
