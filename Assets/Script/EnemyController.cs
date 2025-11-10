@@ -9,6 +9,11 @@ public class EnemyController : MonoBehaviour
     public Vector3 target;
     public Vector3 direction;
     public float angle;
+    public GameManager gameManager;
+    void Start()
+    {
+        gameManager = FindObjectOfType<GameManager>();
+    }
 
     void Update()
     {
@@ -40,6 +45,7 @@ public class EnemyController : MonoBehaviour
 
     private void Die()
     {
+        gameManager.money += 10;
         Destroy(gameObject);
     }
 }
