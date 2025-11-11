@@ -100,17 +100,21 @@ public class TowerController : MonoBehaviour
             cooldownTime = firstShotCD;
         }
 
-        void AttackTarget()
+    void AttackTarget()
+    {
+        if (target != null)
         {
-            if (target != null)
-            {
-                GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-                PojectileController pojectileController = bullet.GetComponent<PojectileController>();
-                pojectileController.target = target;
-                pojectileController.damage = attackDamage;
-                pojectileController.speed = projectileSpeed;
-                pojectileController.towerID = towerID;
-                pojectileController.mummyTower = this;
-            }
+            GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+            PojectileController pojectileController = bullet.GetComponent<PojectileController>();
+            pojectileController.target = target;
+            pojectileController.damage = attackDamage;
+            pojectileController.speed = projectileSpeed;
+            pojectileController.towerID = towerID;
+            pojectileController.mummyTower = this;
+        }
+    }
+        public void ReduceCooldown(float amount)
+        {
+            attackCooldown = Mathf.Max(0.1f, attackCooldown - amount);
         }
 }

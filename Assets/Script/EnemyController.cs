@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class EnemyController : MonoBehaviour
 {
     [Header("Stats de base")]
-    public float baseHealth = 100f;
+    public float maxHealth = 100f;
     public float speed = 1f;
 
     [HideInInspector] public float health;
@@ -20,6 +20,7 @@ public class EnemyController : MonoBehaviour
     public float amount;
     public float timeLeft;
     public float SkadiShotCalculator = 0f;
+    public float debuffDamage = 0;
     [System.Serializable]
     public class SlowEffect
     {
@@ -39,7 +40,7 @@ public class EnemyController : MonoBehaviour
     {
         gameManager = FindObjectOfType<GameManager>();
         target = Vector3.zero;
-        health = baseHealth;
+        health = maxHealth;
     }
 
     void Update()
@@ -83,14 +84,15 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
-        health -= damage;
+        health -= damage * (1 + debuffDamage / 100f);
         if (health <= 0f)
         {
+            gameManager.money += reward;
             Die();
         }
     }
 
-    private void Die()
+    public void Die()
     {
         if (gameManager != null)
             gameManager.money += 10;
@@ -123,7 +125,7 @@ public void getStunned(float duration)
 
     public void SetHealth(float newHealth)
     {
-        baseHealth = newHealth;
+        maxHealth = newHealth;
         health = newHealth;
     }
     public void getAuraEffect(string towerID)
@@ -133,6 +135,17 @@ public void getStunned(float duration)
             case "SkadiAutel":
                 getSlowed(55f, 1f, towerID);
                 break;
+        }
+    }
+    public void DebuffDamage()
+    {
+        if (debuffDamage == 0)
+        {
+            debuffDamage = 10f;
+        }
+        else
+        {
+            debuffDamage += 5f;
         }
     }
 }

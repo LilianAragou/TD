@@ -32,7 +32,6 @@ public class PojectileController : MonoBehaviour
                             enemyHealth.TakeDamage(damage);
                             Destroy(gameObject);
                             return;
-                            break;
                         case "ThorHammer":
                             if (enemyHealth.health <= damage)
                             {
@@ -96,6 +95,27 @@ public class PojectileController : MonoBehaviour
                             enemyHealth.SkadiShotCalculator+= 1f;
                             Destroy(gameObject);
                             break;
+                        case "NecroTower":
+                            enemyHealth.TakeDamage(damage);
+                            enemyHealth.DebuffDamage();
+                            Destroy(gameObject);
+                            return;
+                        case "HelheimSanctuary":
+                            if (enemyHealth.health <= damage)
+                            {
+                                mummyTower.ReduceCooldown(0.1f);
+                            }
+                            enemyHealth.TakeDamage(damage);
+                            Destroy(gameObject);
+                            return;
+                        case "VoidEye":
+                            enemyHealth.TakeDamage(damage);
+                            if (enemyHealth.health <= enemyHealth.maxHealth * 0.2f)
+                            {
+                                enemyHealth.Die();
+                            }
+                            Destroy(gameObject);
+                            return;
                         default:
                             enemyHealth.TakeDamage(damage);
                             Destroy(gameObject);

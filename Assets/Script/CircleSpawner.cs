@@ -101,7 +101,7 @@ public class CircleSpawner : MonoBehaviour
             EnemyController ctrl = enemy.GetComponent<EnemyController>();
             if (ctrl != null)
             {
-                ctrl.SetMaxHealth(ctrl.maxHealth * hpMultiplier);
+                ctrl.SetHealth(ctrl.maxHealth * hpMultiplier);
             }
 
             activeEnemies.Add(enemy);
