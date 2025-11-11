@@ -1,35 +1,37 @@
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class EnemyController : MonoBehaviour
 {
-    [Header("Stats de base")]
-    public float baseHealth = 100f;
+    [Header("Stats")]
+    public float maxHealth = 100f;
+    public float health = 100f;
     public float speed = 1f;
+    public Vector3 target;
+    public Vector3 direction;
+    public float angle;
+    public float reward = 10f;
+    public float debuffDamage = 0;
 
-    [HideInInspector] public float health;
-    [HideInInspector] public GameManager gameManager;
+    public GameManager gameManager;
 
-    private Vector3 target;
-    private Vector3 direction;
-    private float angle;
-
-    void Start()
+void Awake()
     {
-        gameManager = FindObjectOfType<GameManager>();
-        target = Vector3.zero;
-        health = baseHealth;
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        health = maxHealth;
     }
-
     void Update()
     {
+        // Calcul de la direction vers le centre
+        target = Vector3.zero;
         direction = (target - transform.position).normalized;
-        transform.position += direction * speed * Time.deltaTime;
 
+        // Déplacement continu vers le centre
+        transform.position += direction * speed * Time.deltaTime;
         angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
     }
-
-    void OnTriggerEnter2D(Collider2D collision)
+    void OnTriggerEnter2D(Collider2D  collision)
     {
         if (collision.CompareTag("Nexus"))
         {
@@ -39,25 +41,43 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
-        health -= damage;
+        health -= damage * (1 + debuffDamage / 100f);
         if (health <= 0f)
         {
+            gameManager.money += reward;
             Die();
         }
     }
 
-    private void Die()
+    public void Die()
     {
-        if (gameManager != null)
-            gameManager.money += 10;
-
         Destroy(gameObject);
     }
-
-    // Appelée par le spawner pour appliquer le multiplicateur de PV
-    public void SetHealth(float newHealth)
+    public void getStunned(float duration)
     {
-        baseHealth = newHealth;
-        health = newHealth;
+        StartCoroutine(StunCoroutine(duration));
+    }
+    public void DebuffDamage()
+    {
+        if (debuffDamage == 0)
+        {
+            debuffDamage = 10f;
+        }
+        else
+        {
+            debuffDamage += 5f;
+        }
+    }
+    private System.Collections.IEnumerator StunCoroutine(float duration)
+    {
+        float originalSpeed = speed;
+        speed = 0f;
+        yield return new WaitForSeconds(duration);
+        speed = originalSpeed;
+    }
+    public void SetMaxHealth(float newMaxHealth)
+    {
+        maxHealth = newMaxHealth;
+        health = maxHealth;
     }
 }

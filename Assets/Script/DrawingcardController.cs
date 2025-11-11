@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
-using TMPro;
 public class DrawingcardController : MonoBehaviour
 {
     [SerializeField] List<string> cards = new List<string>();
@@ -13,8 +12,6 @@ public class DrawingcardController : MonoBehaviour
     public int handSize = 5;
     public float rerollCost = 2f;
     public GameObject MenuUI;
-    public GameManager gameManager;
-    public TextMeshProUGUI rerollbutton;
     void Start()
     {
         MenuUI.SetActive(false);
@@ -23,12 +20,10 @@ public class DrawingcardController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
         if (Input.GetKeyDown(KeyCode.D))
         {
             drawCard(false);
         }
-        rerollbutton.text = "Reroll = " + rerollCost +"$";   
     }
 
     void drawCard(bool reroll)
@@ -74,16 +69,17 @@ public class DrawingcardController : MonoBehaviour
 
     public void rerollCard()
     {
+        drawCard(true);
+        /*
         if (gameManager.money >= rerollCost)
         {
             gameManager.money -= rerollCost;
             drawCard(true);
-            rerollCost = rerollCost * 2;
         }
         else
         {
             Debug.Log("Not enough money to reroll cards.");
-        }
+        }*/
     }
     public void IChooseCard(float cardIndex)
     {
