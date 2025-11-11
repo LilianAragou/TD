@@ -104,19 +104,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackRange: 4
-  attackDamage: 100
+  attackDamage: 500
   attackCooldown: 1
   projectileSpeed: 5
   target: {fileID: 0}
   enemyTag: Enemy
   dmgType: Foudre
   towerID: ThorTotem
-  hasAnAltShot: 1
-  altShotRate: 4
-  altShotDmg: 500
   firePoint: {fileID: 2642559994293291458}
   projectilePrefab: {fileID: 4838475263919451661, guid: 2e86dd08ebf88f84d81d9db4ee76720f, type: 3}
   rangeaura: {fileID: 5441152800516650730}
+  hasAFirstAttack: 1
+  firstShotCD: 5
 --- !u!61 &2756363482970677407
 BoxCollider2D:
   m_ObjectHideFlags: 0

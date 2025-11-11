@@ -15,10 +15,15 @@ public class TowerController : MonoBehaviour
     public Transform firePoint;
     public GameObject projectilePrefab;
     public GameObject rangeaura;
-    public bool isFirstShot = true;
+    public bool hasAFirstAttack = false;
+    public bool isAuraTower = false;
+    public bool isProjectileTower = true;
+    private bool isFirstShot;
+    public float firstShotCD;
 
     void Start()
     {
+        isFirstShot = hasAFirstAttack;
         rangeaura.SetActive(false);
     }
 
@@ -26,11 +31,11 @@ public class TowerController : MonoBehaviour
     {
         cooldownTime -= Time.deltaTime;
 
-        if (target == null)
+        if (target == null && isProjectileTower)
         {
             CheckForNearestEnemy();
         }
-        else
+        else if (isProjectileTower)
         {
             float distanceToTarget = Vector3.Distance(transform.position, target.position);
             if (distanceToTarget > attackRange)
@@ -42,7 +47,21 @@ public class TowerController : MonoBehaviour
                 AttackTarget();
                 cooldownTime = attackCooldown;
             }
-
+        }
+        if (isAuraTower)
+        {
+            Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, attackRange);
+            foreach (Collider2D enemy in hitEnemies)
+            {
+                if (enemy.CompareTag(enemyTag))
+                {
+                    EnemyController enemyHealth = enemy.GetComponent<EnemyController>();
+                    if (enemyHealth != null)
+                    {
+                        enemyHealth.getAuraEffect(towerID);
+                    }
+                }
+            }
         }
 
 
@@ -77,7 +96,8 @@ public class TowerController : MonoBehaviour
                 }
             }
         target = best;
-            isFirstShot = true;
+        isFirstShot = true;
+            cooldownTime = firstShotCD;
         }
 
         void AttackTarget()
@@ -92,9 +112,5 @@ public class TowerController : MonoBehaviour
                 pojectileController.towerID = towerID;
                 pojectileController.mummyTower = this;
             }
-        }
-        public void ReduceCooldown(float amount)
-        {
-            attackCooldown = Mathf.Max(0.1f, attackCooldown - amount);
         }
 }

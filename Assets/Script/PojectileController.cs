@@ -32,6 +32,7 @@ public class PojectileController : MonoBehaviour
                             enemyHealth.TakeDamage(damage);
                             Destroy(gameObject);
                             return;
+                            break;
                         case "ThorHammer":
                             if (enemyHealth.health <= damage)
                             {
@@ -43,11 +44,11 @@ public class PojectileController : MonoBehaviour
                                 foreach (GameObject e in enemies)
                                 {
                                     if (e == null || e.transform == target)
-                                        continue; 
+                                        continue;
 
                                     float distToTower = Vector3.Distance(mummyTower.transform.position, e.transform.position);
                                     if (distToTower > mummyTower.attackRange)
-                                        continue; 
+                                        continue;
 
                                     float distToMe = Vector3.Distance(transform.position, e.transform.position);
                                     if (distToMe < bestDistToMe)
@@ -85,29 +86,22 @@ public class PojectileController : MonoBehaviour
                             }
                             Destroy(gameObject);
                             break;
-                        case "NecroTower":
+                        case "SkadiTower":
+                            enemyHealth.getSlowed(10f, 3f, towerID);
                             enemyHealth.TakeDamage(damage);
-                            enemyHealth.DebuffDamage();
                             Destroy(gameObject);
-                            return;
-                        case "HelheimSanctuary":
-                            if (enemyHealth.health <= damage)
-                            {
-                                mummyTower.ReduceCooldown(0.1f);
-                            }
+                            break;
+                        case "SkadiCryo":
                             enemyHealth.TakeDamage(damage);
-                            enemyHealth.DebuffDamage();
+                            enemyHealth.SkadiShotCalculator+= 1f;
                             Destroy(gameObject);
-                            return;
-                        case "VoidEye":
+                            break;
+                        default:
                             enemyHealth.TakeDamage(damage);
-                            if (enemyHealth.health <= enemyHealth.maxHealth * 0.2f)
-                            {
-                                enemyHealth.Die();
-                            }
                             Destroy(gameObject);
-                            return;
+                            break;
                     }
+                    
                 }
             }
 
