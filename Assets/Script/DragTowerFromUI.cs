@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class DragTowerFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class DragTowerFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Références")]
     public GameObject towerPrefab;        // prefab monde (tag "Tour")
@@ -19,9 +19,11 @@ public class DragTowerFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private CanvasGroup dragIconCG;
     private int tileLayerMask;
     private Tile hoveredTile;
+    public GameObject TextForHover;
 
     void Awake()
     {
+        TextForHover.SetActive(false);
         tileLayerMask = 1 << LayerMask.NameToLayer(tileLayerName);
 
         if (!dragRootCanvas)
@@ -136,5 +138,14 @@ public class DragTowerFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             hoveredTile.SetHighlightNone();
             hoveredTile = null;
         }
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        TextForHover.SetActive(true);
+    }
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        TextForHover.SetActive(false);
     }
 }

@@ -3,20 +3,27 @@ using System.Linq;
 
 public class TowerController : MonoBehaviour
 {
-    [SerializeField] private float attackRange = 5f;
-    [SerializeField] private float attackDamage = 10f;
-    [SerializeField] private float attackCooldown = 1f;
-    [SerializeField] private float projectileSpeed = 10f;
+    [SerializeField] public float attackRange = 5f;
+    [SerializeField] public float attackDamage = 10f;
+    [SerializeField] public float attackCooldown = 1f;
+    [SerializeField] public float projectileSpeed = 10f;
     private float cooldownTime = 0f;
-    private Transform target;
+    public Transform target;
     public string enemyTag = "Enemy";
-
+    public string dmgType;
+    public string towerID;
     public Transform firePoint;
     public GameObject projectilePrefab;
     public GameObject rangeaura;
+    public bool hasAFirstAttack = false;
+    public bool isAuraTower = false;
+    public bool isProjectileTower = true;
+    private bool isFirstShot;
+    public float firstShotCD;
 
     void Start()
     {
+        isFirstShot = hasAFirstAttack;
         rangeaura.SetActive(false);
     }
 
@@ -24,11 +31,11 @@ public class TowerController : MonoBehaviour
     {
         cooldownTime -= Time.deltaTime;
 
-        if (target == null)
+        if (target == null && isProjectileTower)
         {
             CheckForNearestEnemy();
         }
-        else
+        else if (isProjectileTower)
         {
             float distanceToTarget = Vector3.Distance(transform.position, target.position);
             if (distanceToTarget > attackRange)
@@ -41,50 +48,69 @@ public class TowerController : MonoBehaviour
                 cooldownTime = attackCooldown;
             }
         }
-        
-    }
-
-    void OnMouseEnter()
-    {
-        rangeaura.transform.localScale = new Vector3(attackRange * 4 / transform.localScale.x, attackRange * 4 / transform.localScale.y, 1);
-        rangeaura.SetActive(true);
-    }
-    
-
-    void OnMouseExit()
-    {
-        rangeaura.SetActive(false);
-    }
-
-    void CheckForNearestEnemy()
-    {
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
-        Transform best = null;
-        float bestDistToNexus = Mathf.Infinity;
-        foreach (GameObject e in enemies)
+        if (isAuraTower)
         {
-            float distToMe = Vector3.Distance(transform.position, e.transform.position);
-            if (distToMe > attackRange)
-                continue;
-            float distToNexus = Vector3.Distance(Vector3.zero, e.transform.position);
-            if (distToNexus < bestDistToNexus)
+            Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, attackRange);
+            foreach (Collider2D enemy in hitEnemies)
             {
-                bestDistToNexus = distToNexus;
-                best = e.transform;
+                if (enemy.CompareTag(enemyTag))
+                {
+                    EnemyController enemyHealth = enemy.GetComponent<EnemyController>();
+                    if (enemyHealth != null)
+                    {
+                        enemyHealth.getAuraEffect(towerID);
+                    }
+                }
             }
         }
-        target = best;
+
+
     }
-    
-    void AttackTarget()
-    {
-        if (target != null)
+     void OnMouseEnter()
         {
-            GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-            PojectileController pojectileController = bullet.GetComponent<PojectileController>();
-            pojectileController.target = target;
-            pojectileController.damage = attackDamage;
-            pojectileController.speed = projectileSpeed;
+            rangeaura.transform.localScale = new Vector3(attackRange * 4 / transform.localScale.x, attackRange * 4 / transform.localScale.y, 1);
+            rangeaura.SetActive(true);
         }
-    }
+
+
+    void OnMouseExit()
+        {
+            rangeaura.SetActive(false);
+        }
+
+        public void CheckForNearestEnemy()
+        {
+            GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
+            Transform best = null;
+            float bestDistToNexus = Mathf.Infinity;
+            foreach (GameObject e in enemies)
+            {
+                float distToMe = Vector3.Distance(transform.position, e.transform.position);
+                if (distToMe > attackRange)
+                    continue;
+                float distToNexus = Vector3.Distance(Vector3.zero, e.transform.position);
+                if (distToNexus < bestDistToNexus)
+                {
+                    bestDistToNexus = distToNexus;
+                    best = e.transform;
+                }
+            }
+        target = best;
+        isFirstShot = true;
+            cooldownTime = firstShotCD;
+        }
+
+        void AttackTarget()
+        {
+            if (target != null)
+            {
+                GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+                PojectileController pojectileController = bullet.GetComponent<PojectileController>();
+                pojectileController.target = target;
+                pojectileController.damage = attackDamage;
+                pojectileController.speed = projectileSpeed;
+                pojectileController.towerID = towerID;
+                pojectileController.mummyTower = this;
+            }
+        }
 }
