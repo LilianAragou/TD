@@ -227,13 +227,16 @@ MonoBehaviour:
   projectileSpeed: 5
   target: {fileID: 0}
   enemyTag: Enemy
-  dmgType: 
+  dmgType: Foudre
   towerID: ThorPillar
   firePoint: {fileID: 1115762976270377010}
   projectilePrefab: {fileID: 4838475263919451661, guid: 2e86dd08ebf88f84d81d9db4ee76720f, type: 3}
   rangeaura: {fileID: 7451905822343282191}
   hasAFirstAttack: 0
+  isAuraTower: 0
+  isProjectileTower: 1
   firstShotCD: 0
+  numberOfTargets: 1
 --- !u!61 &8917919850270388217
 BoxCollider2D:
   m_ObjectHideFlags: 0

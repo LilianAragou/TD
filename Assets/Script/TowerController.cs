@@ -12,7 +12,7 @@ public class TowerController : MonoBehaviour
     public Transform target;
     private List<Transform> attackedTargets = new List<Transform>();
     public string enemyTag = "Enemy";
-    public string dmgType;
+    public DamageType dmgType;
     public string towerID;
     public Transform firePoint;
     public GameObject projectilePrefab;
@@ -23,6 +23,7 @@ public class TowerController : MonoBehaviour
     private bool isFirstShot;
     public float firstShotCD;
     public float numberOfTargets = 1f;
+    
 
     void Start()
     {

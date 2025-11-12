@@ -30,17 +30,19 @@ public class PojectileController : MonoBehaviour
                     switch (towerID)
                     {
                         case "ThorTotem":
-                            enemyHealth.TakeDamage(damage);
+                            enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                             Destroy(gameObject);
                             return;
-                            break;
                         case "ThorHammer":
                             if (enemyHealth.health <= damage)
                             {
-                                enemyHealth.TakeDamage(damage);
+                                enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                                 GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
                                 Transform best = null;
+                                Transform second = null;
+
                                 float bestDistToMe = Mathf.Infinity;
+                                float secondDistToMe = Mathf.Infinity;
 
                                 foreach (GameObject e in enemies)
                                 {
@@ -54,8 +56,15 @@ public class PojectileController : MonoBehaviour
                                     float distToMe = Vector3.Distance(transform.position, e.transform.position);
                                     if (distToMe < bestDistToMe)
                                     {
+                                        secondDistToMe = bestDistToMe;
                                         bestDistToMe = distToMe;
+                                        second = best;
                                         best = e.transform;
+
+                                    } else if (distToMe < secondDistToMe)
+                                    {
+                                        secondDistToMe = distToMe;
+                                        second = e.transform;
                                     }
                                 }
 
@@ -67,10 +76,20 @@ public class PojectileController : MonoBehaviour
                                 {
                                     Destroy(gameObject);
                                 }
+                                if (second != null && best != null && DrawingcardController.card1)
+                                {
+                                    GameObject newProjectile = Instantiate(gameObject, transform.position, Quaternion.identity);
+                                    PojectileController pc = newProjectile.GetComponent<PojectileController>();
+                                    pc.target = second;
+                                    pc.damage = damage;
+                                    pc.speed = speed;
+                                    pc.towerID = towerID;
+                                    pc.mummyTower = mummyTower;
+                                }
                             }
                             else
                             {
-                                enemyHealth.TakeDamage(damage);
+                                enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                                 Destroy(gameObject);
                             }
                             break;
@@ -78,27 +97,34 @@ public class PojectileController : MonoBehaviour
                             Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, 1.5f);
                             foreach (var enemy in hitEnemies)
                             {
-                                enemyHealth.TakeDamage(damage);
+                                enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                                 EnemyController enemyCtrl = enemy.GetComponent<EnemyController>();
                                 if (enemyCtrl != null)
                                 {
-                                    enemyCtrl.getStunned(0.75f);
+                                    if (DrawingcardController.card4)
+                                    {
+                                        enemyCtrl.getStunned(1.5f);
+                                    }
+                                    else
+                                    {
+                                        enemyCtrl.getStunned(0.75f);
+                                    }
                                 }
                             }
                             Destroy(gameObject);
                             break;
                         case "SkadiTower":
                             enemyHealth.getSlowed(10f, 3f, towerID);
-                            enemyHealth.TakeDamage(damage);
+                            enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                             Destroy(gameObject);
                             break;
                         case "SkadiCryo":
-                            enemyHealth.TakeDamage(damage);
+                            enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                             enemyHealth.SkadiShotCalculator += 1f;
                             Destroy(gameObject);
                             break;
                         case "NecroTower":
-                            enemyHealth.TakeDamage(damage);
+                            enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                             enemyHealth.DebuffDamage();
                             Destroy(gameObject);
                             return;
@@ -107,25 +133,25 @@ public class PojectileController : MonoBehaviour
                             {
                                 mummyTower.ReduceCooldown(0.1f);
                             }
-                            enemyHealth.TakeDamage(damage);
+                            enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                             enemyHealth.DebuffDamage();
                             Destroy(gameObject);
                             return;
                         case "VoidEye":
-                            enemyHealth.TakeDamage(damage);
+                            enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                             if (enemyHealth.health <= enemyHealth.maxHealth * 0.2f)
                             {
-                                enemyHealth.TakeDamage(enemyHealth.health + 1f);
+                                enemyHealth.TakeDamage(enemyHealth.health + 1f, mummyTower.dmgType);
                             }
                             Destroy(gameObject);
                             return;
                         default:
-                            enemyHealth.TakeDamage(damage);
+                            enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                             Destroy(gameObject);
                             break;
                         case "RuneBrasero":
                             {
-                                enemyHealth.TakeDamage(damage);
+                                enemyHealth.TakeDamage(damage, mummyTower.dmgType);
                                 Destroy(gameObject);
                                 return;
                             }
@@ -136,6 +162,7 @@ public class PojectileController : MonoBehaviour
                                 if (aoeManager != null)
                                 {
                                     aoeManager.damage = damage;
+                                    aoeManager.dmgType = mummyTower.dmgType;
                                     aoeManager.radius = 0.8f;
                                     aoeManager.duration = 10f;
                                     aoeManager.tickInterval = 0.1f;

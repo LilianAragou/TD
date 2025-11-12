@@ -2,14 +2,14 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using System.Collections.Generic;
 
-
+public enum DamageType { Feu, Snow, Terre, Air, Necrotique, Foudre, Base }
 public class EnemyController : MonoBehaviour
 {
     [Header("Stats de base")]
-    public float baseHealth = 100f;
     public float speed = 1f;
+    public float baseSpeed = 1f;
 
-    [HideInInspector] public float health;
+    public float health;
     [HideInInspector] public GameManager gameManager;
 
     [Header("Stats")]
@@ -23,6 +23,20 @@ public class EnemyController : MonoBehaviour
     public float timeLeft;
     public float SkadiShotCalculator = 0f;
     public float debuffDamage = 0f;
+    [Header("Unit")]
+    public bool slowImmune = false;
+    public float slowImmuneTimer = 1.0f;
+    public bool isBerserk = false;
+    public bool isSanglier = false;
+    public bool isFoudroye = false;
+    public bool isPorteur = false;
+    public bool isChef = false;
+    public bool isClerc = false;
+    public float chefRange = 1.5f;
+    public float clercRange = 1.5f;
+
+    public float traveled = 0f;
+    private float berserkDamage = 0f;
 
     [System.Serializable]
     public class SlowEffect
@@ -31,6 +45,12 @@ public class EnemyController : MonoBehaviour
         public float timeLeft;
         public string towerID;
     }
+    
+
+    [Header("Résistances et faiblesses")]
+    public List<DamageType> resistances = new List<DamageType>();
+    public List<DamageType> faiblesses = new List<DamageType>();
+
     public List<SlowEffect> activeSlows = new List<SlowEffect>();
 
     void Awake()
@@ -44,23 +64,64 @@ public class EnemyController : MonoBehaviour
         gameManager = FindObjectOfType<GameManager>();
         target = Vector3.zero;
         health = maxHealth;
+        baseSpeed = speed;
     }
 
     void Update()
     {
         float currentSpeed = speed;
-
-        for (int i = activeSlows.Count - 1; i >= 0; i--)
+        if (!slowImmune)
         {
-            activeSlows[i].timeLeft -= Time.deltaTime;
-            if (activeSlows[i].timeLeft <= 0)
+            for (int i = activeSlows.Count - 1; i >= 0; i--)
             {
-                activeSlows.RemoveAt(i);
-                continue;
+                activeSlows[i].timeLeft -= Time.deltaTime;
+                if (activeSlows[i].timeLeft <= 0)
+                {
+                    activeSlows.RemoveAt(i);
+                    continue;
+                }
+                currentSpeed *= (1f - activeSlows[i].amount / 100f);
             }
-            currentSpeed *= (1f - activeSlows[i].amount / 100f);
+        }
+        else if (slowImmuneTimer > 0f && activeSlows.Count > 0)
+        {
+            slowImmuneTimer -= Time.deltaTime;
         }
 
+        if (slowImmuneTimer <= 0f)
+        {
+            slowImmune = false;
+        }
+        if (isChef)
+        {
+            int count = 0;
+            Meute[] allSoldiers = FindObjectsByType<Meute>(FindObjectsSortMode.None);
+
+            foreach (Meute s in allSoldiers)
+            {
+                if (s == this) continue;
+
+                float dist = Vector3.Distance(transform.position, s.transform.position);
+                if (dist <= chefRange)
+                    count++;
+            }
+
+            health += count * 15f * Time.deltaTime;
+        }
+        if (isClerc)
+        {
+            EnemyController[] allSoldiers = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+
+            foreach (EnemyController s in allSoldiers)
+            {
+                if (s == this) continue;
+
+                float dist = Vector3.Distance(transform.position, s.transform.position);
+                if (dist <= clercRange)
+                    s.SetSoldierHeal(5);
+            }
+
+        }
         secretSpeed = currentSpeed;
 
         if (SkadiShotCalculator == 3f)
@@ -74,6 +135,15 @@ public class EnemyController : MonoBehaviour
         transform.position += direction * secretSpeed * Time.deltaTime;
         angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
+        traveled += secretSpeed * Time.deltaTime;
+        if (isSanglier)
+        {
+            speed = (baseSpeed * Mathf.Exp(traveled / 3f));
+        }
+        if (health > maxHealth)
+        {
+            health = maxHealth;
+        }
     }
 
     void OnTriggerEnter2D(Collider2D collision)
@@ -85,14 +155,39 @@ public class EnemyController : MonoBehaviour
     }
 
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage, DamageType type)
     {
-        health -= damage;
-        if (health <= 0f)
+        if (DrawingcardController.card5)
         {
-            Die();
+            damage *= 1.15f;
         }
+        if (type == DamageType.Feu && isPorteur)
+        {
+            speed *= 1.5f;
+            isPorteur = false;
+        }
+        if (type == DamageType.Foudre && isFoudroye)
+        {
+            health += maxHealth * 0.5f;
+            if (health > maxHealth)
+                health = maxHealth;
+        }
+        var reduction = berserkDamage % 100f;
+        for (int i = 0; i < reduction; i += 1)
+        {
+            damage *= 0.90f;
+        }
+        if (resistances.Contains(type))
+            damage *= 0.5f; // 50% dmg en moins
+        else if (faiblesses.Contains(type))
+            damage *= 1.25f; // 25% dmg en plus
+
+        health -= damage;
+        berserkDamage += damage;
+        if (health <= 0f)
+            Die();
     }
+
 
     private void Die()
     {
@@ -125,11 +220,6 @@ public class EnemyController : MonoBehaviour
         activeSlows.Add(new SlowEffect { amount = slowAmount, timeLeft = duration, towerID = towerID });
     }
 
-    public void SetHealth(float newHealth)
-    {
-        baseHealth = newHealth;
-        health = newHealth;
-    }
     public void getAuraEffect(string towerID)
     {
         switch (towerID)
@@ -159,24 +249,33 @@ public class EnemyController : MonoBehaviour
 
     private Dictionary<string, Coroutine> activeDots = new Dictionary<string, Coroutine>();
 
-    public void damageOverTime(float damage, float duration, float interval, string towerID)
+    public void DamageOverTime(float damage, float duration, float interval, string towerID, DamageType type)
     {
         if (activeDots.ContainsKey(towerID))
             StopCoroutine(activeDots[towerID]);
 
-        Coroutine newDot = StartCoroutine(DamageOverTimeCoroutine(damage, duration, interval, towerID));
+        Coroutine newDot = StartCoroutine(DamageOverTimeCoroutine(damage, duration, interval, towerID, type));
         activeDots[towerID] = newDot;
     }
 
-    private System.Collections.IEnumerator DamageOverTimeCoroutine(float damage, float duration, float interval, string towerID)
-{
-    float elapsed = 0f;
-    while (elapsed < duration)
+    private System.Collections.IEnumerator DamageOverTimeCoroutine(float damage, float duration, float interval, string towerID, DamageType type)
     {
-        TakeDamage(damage); 
-        yield return new WaitForSeconds(interval);
-        elapsed += interval;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            TakeDamage(damage, type);
+            yield return new WaitForSeconds(interval);
+            elapsed += interval;
+        }
     }
-}
+    public void SetSoldierHeal(int soldierInRange)
+    {
+        float healAmount = soldierInRange * 10f * Time.deltaTime;
+        health += healAmount;
+        if (health > maxHealth)
+        {
+            health = maxHealth;
+        }
+    }
 
 }

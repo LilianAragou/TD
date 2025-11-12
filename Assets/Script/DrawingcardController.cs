@@ -12,6 +12,13 @@ public class DrawingcardController : MonoBehaviour
     public int handSize = 5;
     public float rerollCost = 2f;
     public GameObject MenuUI;
+    public static bool card1 = false;
+    public static bool card2 = false;
+    public static float card2Cooldown = 90f;
+    public static bool card3 = false;
+    public static bool card3Used = false;
+    public static bool card4 = false;
+    public static bool card5 = false;
     void Start()
     {
         MenuUI.SetActive(false);
@@ -46,40 +53,39 @@ public class DrawingcardController : MonoBehaviour
         Debug.Log("Final drawn cards: " + string.Join(", ", drawnCards));
     }
     Color getColor(string cardName)
-{
-    return cardName switch
     {
-        "1" => new Color(1f, 0f, 0f, 1f),
-        "2" => new Color(0f, 1f, 0f, 1f),
-        "3" => new Color(0f, 0f, 1f, 1f),
-        "4" => new Color(1f, 1f, 0f, 1f),
-        "5" => new Color(1f, 0f, 1f, 1f),
-        "6" => new Color(0f, 1f, 1f, 1f),
-        "7" => new Color(1f, 0.5f, 0f, 1f),
-        "8" => new Color(0.5f, 1f, 0f, 1f),
-        "9" => new Color(0f, 0.5f, 1f, 1f),
-        "10" => new Color(1f, 0f, 0.5f, 1f),
-        "11" => new Color(0.5f, 0f, 1f, 1f),
-        "12" => new Color(0f, 1f, 0.5f, 1f),
+        return cardName switch
+        {
+            "1" => new Color(1f, 0f, 0f, 1f),
+            "2" => new Color(0f, 1f, 0f, 1f),
+            "3" => new Color(0f, 0f, 1f, 1f),
+            "4" => new Color(1f, 1f, 0f, 1f),
+            "5" => new Color(1f, 0f, 1f, 1f),
+            "6" => new Color(0f, 1f, 1f, 1f),
+            "7" => new Color(1f, 0.5f, 0f, 1f),
+            "8" => new Color(0.5f, 1f, 0f, 1f),
+            "9" => new Color(0f, 0.5f, 1f, 1f),
+            "10" => new Color(1f, 0f, 0.5f, 1f),
+            "11" => new Color(0.5f, 0f, 1f, 1f),
+            "12" => new Color(0f, 1f, 0.5f, 1f),
 
-        _ => new Color(0.2f, 0.2f, 0.2f, 1f),
-    };
-}
+            _ => new Color(0.2f, 0.2f, 0.2f, 1f),
+        };
+    }
 
 
     public void rerollCard()
     {
         drawCard(true);
-        /*
-        if (gameManager.money >= rerollCost)
+        if (GameManager.Instance.money >= rerollCost)
         {
-            gameManager.money -= rerollCost;
+            GameManager.Instance.money -= rerollCost;
             drawCard(true);
         }
         else
         {
             Debug.Log("Not enough money to reroll cards.");
-        }*/
+        }
     }
     public void IChooseCard(float cardIndex)
     {
