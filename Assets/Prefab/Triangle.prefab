@@ -135,3 +135,6 @@ MonoBehaviour:
   target: {fileID: 0}
   damage: 0
   speed: 0
+  towerID: 
+  mummyTower: {fileID: 0}
+  aoePrefab: {fileID: 1027105917405568975, guid: 26bda3e36b798f140be490ddfa212225, type: 3}

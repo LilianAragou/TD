@@ -11,7 +11,9 @@ public class EnemyController : MonoBehaviour
 
     [HideInInspector] public float health;
     [HideInInspector] public GameManager gameManager;
+
     [Header("Stats")]
+    public float maxHealth = 100f;
     public Vector3 target;
     public Vector3 direction;
     public float angle;
@@ -20,6 +22,8 @@ public class EnemyController : MonoBehaviour
     public float amount;
     public float timeLeft;
     public float SkadiShotCalculator = 0f;
+    public float debuffDamage = 0f;
+
     [System.Serializable]
     public class SlowEffect
     {
@@ -33,13 +37,13 @@ public class EnemyController : MonoBehaviour
     {
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         secretSpeed = speed;
-    }    
+    }
 
     void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
         target = Vector3.zero;
-        health = baseHealth;
+        health = maxHealth;
     }
 
     void Update()
@@ -79,7 +83,7 @@ public class EnemyController : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    
+
 
     public void TakeDamage(float damage)
     {
@@ -98,7 +102,7 @@ public class EnemyController : MonoBehaviour
         Destroy(gameObject);
     }
 
-public void getStunned(float duration)
+    public void getStunned(float duration)
     {
         StartCoroutine(StunCoroutine(duration));
     }
@@ -135,4 +139,44 @@ public void getStunned(float duration)
                 break;
         }
     }
+
+    public void DebuffDamage()
+    {
+        if (debuffDamage == 0)
+        {
+            debuffDamage = 10f;
+        }
+        else
+        {
+            debuffDamage += 5f;
+        }
+    }
+    public void SetMaxHealth(float newMaxHealth)
+    {
+        maxHealth = newMaxHealth;
+        health = maxHealth;
+    }
+
+    private Dictionary<string, Coroutine> activeDots = new Dictionary<string, Coroutine>();
+
+    public void damageOverTime(float damage, float duration, float interval, string towerID)
+    {
+        if (activeDots.ContainsKey(towerID))
+            StopCoroutine(activeDots[towerID]);
+
+        Coroutine newDot = StartCoroutine(DamageOverTimeCoroutine(damage, duration, interval, towerID));
+        activeDots[towerID] = newDot;
+    }
+
+    private System.Collections.IEnumerator DamageOverTimeCoroutine(float damage, float duration, float interval, string towerID)
+{
+    float elapsed = 0f;
+    while (elapsed < duration)
+    {
+        TakeDamage(damage); 
+        yield return new WaitForSeconds(interval);
+        elapsed += interval;
+    }
+}
+
 }
