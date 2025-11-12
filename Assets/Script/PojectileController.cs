@@ -7,6 +7,7 @@ public class PojectileController : MonoBehaviour
     public float speed;
     public string towerID;
     public TowerController mummyTower;
+    public GameObject aoePrefab;
 
     void Update()
     {
@@ -32,6 +33,7 @@ public class PojectileController : MonoBehaviour
                             enemyHealth.TakeDamage(damage);
                             Destroy(gameObject);
                             return;
+                            break;
                         case "ThorHammer":
                             if (enemyHealth.health <= damage)
                             {
@@ -92,7 +94,7 @@ public class PojectileController : MonoBehaviour
                             break;
                         case "SkadiCryo":
                             enemyHealth.TakeDamage(damage);
-                            enemyHealth.SkadiShotCalculator+= 1f;
+                            enemyHealth.SkadiShotCalculator += 1f;
                             Destroy(gameObject);
                             break;
                         case "NecroTower":
@@ -106,13 +108,14 @@ public class PojectileController : MonoBehaviour
                                 mummyTower.ReduceCooldown(0.1f);
                             }
                             enemyHealth.TakeDamage(damage);
+                            enemyHealth.DebuffDamage();
                             Destroy(gameObject);
                             return;
                         case "VoidEye":
                             enemyHealth.TakeDamage(damage);
                             if (enemyHealth.health <= enemyHealth.maxHealth * 0.2f)
                             {
-                                enemyHealth.Die();
+                                enemyHealth.TakeDamage(enemyHealth.health + 1f);
                             }
                             Destroy(gameObject);
                             return;
@@ -120,8 +123,44 @@ public class PojectileController : MonoBehaviour
                             enemyHealth.TakeDamage(damage);
                             Destroy(gameObject);
                             break;
+                        case "RuneBrasero":
+                            {
+                                enemyHealth.TakeDamage(damage);
+                                Destroy(gameObject);
+                                return;
+                            }
+                        case "VolcanoTower":
+                            {
+                                GameObject aoe = Instantiate(aoePrefab, transform.position, Quaternion.identity);
+                                AOEManager aoeManager = aoe.GetComponent<AOEManager>();
+                                if (aoeManager != null)
+                                {
+                                    aoeManager.damage = damage;
+                                    aoeManager.radius = 0.8f;
+                                    aoeManager.duration = 10f;
+                                    aoeManager.tickInterval = 0.1f;
+                                }
+                                Destroy(gameObject);
+                                return;
+                            }
+
+
                     }
-                    
+
+                }
+                else if (towerID == "panickShot")
+                {
+                    GameObject aoe = Instantiate(aoePrefab, transform.position, Quaternion.identity);
+                    AOEManager aoeManager = aoe.GetComponent<AOEManager>();
+                    if (aoeManager != null)
+                    {
+                        aoeManager.damage = damage;
+                        aoeManager.radius = 0.8f;
+                        aoeManager.duration = 10f;
+                        aoeManager.tickInterval = 0.1f;
+                    }
+                    Destroy(gameObject);
+                    return;
                 }
             }
 
