@@ -157,7 +157,7 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(float damage, DamageType type)
     {
-        if (DrawingcardController.card5)
+        if (DrawingcardController.card5 && type == DamageType.Foudre)
         {
             damage *= 1.15f;
         }
@@ -172,11 +172,15 @@ public class EnemyController : MonoBehaviour
             if (health > maxHealth)
                 health = maxHealth;
         }
-        var reduction = berserkDamage % 100f;
-        for (int i = 0; i < reduction; i += 1)
+        if (isBerserk)
         {
-            damage *= 0.90f;
+            var reduction = berserkDamage / 100f;
+            for (int i = 0; i < reduction; i += 1)
+            {
+                damage *= 0.90f;
+            }
         }
+        
         if (resistances.Contains(type))
             damage *= 0.5f; // 50% dmg en moins
         else if (faiblesses.Contains(type))

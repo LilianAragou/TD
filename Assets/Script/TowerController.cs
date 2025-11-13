@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 
 public class TowerController : MonoBehaviour
@@ -23,7 +24,18 @@ public class TowerController : MonoBehaviour
     private bool isFirstShot;
     public float firstShotCD;
     public float numberOfTargets = 1f;
-    
+
+    // --- Effets spéciaux ---
+    private bool foudreBuffer = false;
+    public bool foudrebuffed = false;
+    public bool foudrebuffedapplied = false;
+
+    // Orage
+    public bool orageActive = false;
+    public float orageDamage = 0f;
+    public float orageTimer = 0f;
+    public float orageTickRate = 0.1f;
+    private Coroutine orageCoroutine;
 
     void Start()
     {
@@ -33,31 +45,40 @@ public class TowerController : MonoBehaviour
 
     void Update()
     {
+        if (foudrebuffed && !foudrebuffedapplied)
+        {
+            attackDamage *= 1.3f;
+            foudrebuffedapplied = true;
+        }
+
         cooldownTime -= Time.deltaTime;
 
+        // --- Gestion du tir projectile ---
         if (isProjectileTower)
         {
-        if (cooldownTime>0f)
-            return;
-           
-        if (target == null)
-        {
-            CheckForNearestEnemy();
-        }
-        else
-        {
-            float distanceToTarget = Vector3.Distance(transform.position, target.position);
-            if (distanceToTarget > attackRange)
+            if (cooldownTime > 0f)
+                return;
+
+            if (target == null)
             {
-                target = null;
+                CheckForNearestEnemy();
             }
-            else if (cooldownTime <= 0f)
+            else
             {
-                AttackTarget();
-                cooldownTime = attackCooldown;
+                float distanceToTarget = Vector3.Distance(transform.position, target.position);
+                if (distanceToTarget > attackRange)
+                {
+                    target = null;
+                }
+                else if (cooldownTime <= 0f)
+                {
+                    AttackTarget();
+                    cooldownTime = attackCooldown;
+                }
             }
-        } 
         }
+
+        // --- Gestion de l’aura ---
         if (isAuraTower)
         {
             Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, attackRange);
@@ -67,21 +88,21 @@ public class TowerController : MonoBehaviour
                 {
                     EnemyController enemyHealth = enemy.GetComponent<EnemyController>();
                     if (enemyHealth != null)
-                    {
                         enemyHealth.getAuraEffect(towerID);
-                    }
                 }
             }
         }
 
-
+        // --- Gestion du buff Foudre ---
+        if (foudreBuffer)
+            ApplyFoudreBuffer();
     }
+
     void OnMouseEnter()
     {
         rangeaura.transform.localScale = new Vector3(attackRange * 4 / transform.localScale.x, attackRange * 4 / transform.localScale.y, 1);
         rangeaura.SetActive(true);
     }
-
 
     void OnMouseExit()
     {
@@ -93,11 +114,13 @@ public class TowerController : MonoBehaviour
         GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
         Transform best = null;
         float bestDistToNexus = Mathf.Infinity;
+
         foreach (GameObject e in enemies)
         {
             float distToMe = Vector3.Distance(transform.position, e.transform.position);
             if (distToMe > attackRange)
                 continue;
+
             float distToNexus = Vector3.Distance(Vector3.zero, e.transform.position);
             if (distToNexus < bestDistToNexus)
             {
@@ -105,47 +128,46 @@ public class TowerController : MonoBehaviour
                 best = e.transform;
             }
         }
+
         target = best;
         isFirstShot = true;
         cooldownTime = firstShotCD;
     }
 
     void getNewTarget()
-{
-    GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
-    Transform best = null;
-    float bestDistToNexus = Mathf.Infinity;
-
-    foreach (GameObject e in enemies)
     {
-        Transform t = e.transform;
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
+        Transform best = null;
+        float bestDistToNexus = Mathf.Infinity;
 
-        if (attackedTargets.Contains(t))
-            continue;
-
-        float distToMe = Vector3.Distance(transform.position, t.position);
-        if (distToMe > attackRange)
-            continue;
-
-        float distToNexus = Vector3.Distance(Vector3.zero, t.position);
-        if (distToNexus < bestDistToNexus)
+        foreach (GameObject e in enemies)
         {
-            bestDistToNexus = distToNexus;
-            best = t;
+            Transform t = e.transform;
+            if (attackedTargets.Contains(t))
+                continue;
+
+            float distToMe = Vector3.Distance(transform.position, t.position);
+            if (distToMe > attackRange)
+                continue;
+
+            float distToNexus = Vector3.Distance(Vector3.zero, t.position);
+            if (distToNexus < bestDistToNexus)
+            {
+                bestDistToNexus = distToNexus;
+                best = t;
+            }
+        }
+
+        if (best != null)
+        {
+            attackedTargets.Add(best);
+            target = best;
+        }
+        else
+        {
+            target = null;
         }
     }
-    if (best != null)
-    {
-        attackedTargets.Add(best);
-        target = best;
-    }
-    else
-    {
-        target = null;
-    }
-}
-
-
 
     void AttackTarget()
     {
@@ -164,47 +186,103 @@ public class TowerController : MonoBehaviour
                     }
                     else
                     {
-                        GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-                        PojectileController pojectileController = bullet.GetComponent<PojectileController>();
-                        pojectileController.target = target;
-                        pojectileController.damage = attackDamage;
-                        pojectileController.speed = projectileSpeed;
-                        pojectileController.towerID = towerID;
-                        pojectileController.mummyTower = this;
+                        FireProjectile(target);
                     }
                 }
             }
             else
             {
-                GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-                PojectileController pojectileController = bullet.GetComponent<PojectileController>();
-                pojectileController.target = target;
-                pojectileController.damage = attackDamage;
-                pojectileController.speed = projectileSpeed;
-                pojectileController.towerID = towerID;
-                pojectileController.mummyTower = this;
+                FireProjectile(target);
             }
         }
     }
+
+    void FireProjectile(Transform target)
+    {
+        GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+        PojectileController pojectileController = bullet.GetComponent<PojectileController>();
+        pojectileController.target = target;
+        pojectileController.damage = attackDamage;
+        pojectileController.speed = projectileSpeed;
+        pojectileController.towerID = towerID;
+        pojectileController.mummyTower = this;
+    }
+
     public void ReduceCooldown(float amount)
     {
         attackCooldown = Mathf.Max(0.1f, attackCooldown - amount);
     }
 
     void panickShot()
-{
-    Vector2 randomPoint = (Vector2)transform.position + Random.insideUnitCircle * attackRange;
-    GameObject tempTarget = new GameObject("TempTarget");
+    {
+        Vector2 randomPoint = (Vector2)transform.position + Random.insideUnitCircle * attackRange;
+        GameObject tempTarget = new GameObject("TempTarget");
         tempTarget.transform.position = randomPoint;
-    tempTarget.tag = enemyTag;
-    GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-    PojectileController pojectileController = bullet.GetComponent<PojectileController>();
-    pojectileController.target = tempTarget.transform;
-    pojectileController.damage = attackDamage;
-    pojectileController.speed = projectileSpeed;
-    pojectileController.towerID = "panickShot";
-    pojectileController.mummyTower = this;
-    Destroy(tempTarget, 2f);
-}
+        tempTarget.tag = enemyTag;
+        FireProjectile(tempTarget.transform);
+        Destroy(tempTarget, 2f);
+    }
 
+    // ⚡ --- FoudreBuffer : applique une aura de buff aux autres tours ---
+    void ApplyFoudreBuffer()
+    {
+        Collider2D[] towersInRange = Physics2D.OverlapCircleAll(transform.position, attackRange);
+        foreach (Collider2D col in towersInRange)
+        {
+            TowerController otherTower = col.GetComponent<TowerController>();
+            if (otherTower != null && otherTower != this)
+            {
+                otherTower.foudrebuffed = true;
+            }
+        }
+    }
+
+    // 🌩️ --- Orage : coroutine pour infliger des dégâts constants ---
+    private IEnumerator OrageCoroutine(float damage, float duration)
+    {
+        orageActive = true;
+        float elapsed = 0f;
+
+        // Utilisation d’un buffer statique pour éviter les allocations
+        Collider2D[] buffer = new Collider2D[50];
+
+        while (elapsed < duration)
+        {
+            int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, attackRange, buffer);
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider2D enemy = buffer[i];
+                if (enemy != null && enemy.CompareTag(enemyTag))
+                {
+                    EnemyController enemyHealth = enemy.GetComponent<EnemyController>();
+                    if (enemyHealth != null)
+                        enemyHealth.TakeDamage(damage, DamageType.Foudre);
+                }
+            }
+
+            elapsed += orageTickRate;
+            yield return new WaitForSeconds(orageTickRate);
+        }
+
+        orageActive = false;
+        orageCoroutine = null;
+    }
+
+    // --- Appelées par tes cartes ---
+    public void BuffFoudre()
+    {
+        foudreBuffer = true;
+    }
+
+    public void Orage(float damage, float duration)
+    {
+        // Stoppe une orage précédente si encore active
+        if (orageCoroutine != null)
+        {
+            StopCoroutine(orageCoroutine);
+            orageCoroutine = null;
+        }
+
+        orageCoroutine = StartCoroutine(OrageCoroutine(damage, duration));
+    }
 }
