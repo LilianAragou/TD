@@ -5,11 +5,11 @@ public class AOEManager : MonoBehaviour
     public float damage;
     public float radius;
     public float duration;
-    public DamageType dmgType;
     public float tickInterval;
     private float tickTimer;
     private float timeLeft;
     public GameObject aoeEffect;
+    public TowerController mummyTower;
     void Start()
     {
         timeLeft = duration;
@@ -33,7 +33,8 @@ public class AOEManager : MonoBehaviour
                     EnemyController enemyHealth = collider.GetComponent<EnemyController>();
                     if (enemyHealth != null)
                     {
-                        enemyHealth.TakeDamage(damage, dmgType);
+                        enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                        mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                     }
                 }
             }

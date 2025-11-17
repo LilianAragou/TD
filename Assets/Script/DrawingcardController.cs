@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
-using TMPro; // si tu utilises TextMeshPro (sinon remplace par Text)
+using TMPro;
 
 public class DrawingcardController : MonoBehaviour
 {
@@ -9,14 +9,15 @@ public class DrawingcardController : MonoBehaviour
     [SerializeField] List<string> temporaryCards = new List<string>();
     [SerializeField] List<string> drawnCards = new List<string>();
 
-    public GameObject[] cardsObjects;         // UI des cartes tirées
-    public GameObject[] ownedCardsObjects;    // UI des cartes possédées
+    public GameObject[] cardsObjects;
+    public GameObject[] ownedCardsObjects;
 
     public int handSize = 5;
     public float rerollCost = 2f;
     public GameObject MenuUI;
+    public GameManager gameManager;
+    public TextMeshProUGUI rerollbutton;
 
-    // États des cartes
     public static bool card1 = false;
     public static bool card2 = false;
     public static float card2Cooldown = 90f;
@@ -32,33 +33,28 @@ public class DrawingcardController : MonoBehaviour
     {
         MenuUI.SetActive(false);
 
-        // Initialise les slots des cartes possédées comme vides
         foreach (GameObject slot in ownedCardsObjects)
         {
             Image img = slot.GetComponent<Image>();
-            if (img != null)
-                img.color = new Color(0.2f, 0.2f, 0.2f, 1f); // gris vide
+            if (img != null) img.color = new Color(0.2f, 0.2f, 0.2f, 1f);
 
             TMP_Text text = slot.GetComponentInChildren<TMP_Text>();
-            if (text != null)
-                text.text = "";
+            if (text != null) text.text = "";
         }
     }
 
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.D))
-        {
             drawCard(false);
-        }
+
+        rerollbutton.text = "Reroll = " + rerollCost + "$";
     }
 
     void drawCard(bool reroll)
     {
         if (!reroll)
-        {
             temporaryCards = new List<string>(cards);
-        }
 
         drawnCards.Clear();
 
@@ -68,17 +64,14 @@ public class DrawingcardController : MonoBehaviour
 
             int randomIndex = Random.Range(0, temporaryCards.Count);
             string drawnCard = temporaryCards[randomIndex];
-            drawnCards.Add(drawnCard);
 
-            // Change la couleur de la carte tirée
+            drawnCards.Add(drawnCard);
             cardsObjects[i].GetComponent<Image>().color = getColor(drawnCard);
-            //cardsObjects[i].GetComponentInChildren<TMP_Text>().text = drawnCard;
 
             temporaryCards.RemoveAt(randomIndex);
         }
 
         MenuUI.SetActive(true);
-        Debug.Log("Final drawn cards: " + string.Join(", ", drawnCards));
     }
 
     Color getColor(string cardName)
@@ -103,14 +96,11 @@ public class DrawingcardController : MonoBehaviour
 
     public void rerollCard()
     {
-        if (GameManager.Instance.money >= rerollCost)
+        if (gameManager.money >= rerollCost)
         {
-            GameManager.Instance.money -= rerollCost;
+            gameManager.money -= rerollCost;
             drawCard(true);
-        }
-        else
-        {
-            Debug.Log("Not enough money to reroll cards.");
+            rerollCost *= 2;
         }
     }
 
@@ -120,9 +110,8 @@ public class DrawingcardController : MonoBehaviour
         if (index < 0 || index >= drawnCards.Count) return;
 
         string chosen = drawnCards[index];
-        Debug.Log("Player chose card: " + chosen);
+        cards.Remove(chosen);
 
-        // Active les bools associés
         switch (chosen)
         {
             case "1": card1 = true; break;
@@ -130,10 +119,8 @@ public class DrawingcardController : MonoBehaviour
             case "3": card3 = true; card3Used = false; break;
             case "4": card4 = true; break;
             case "5": card5 = true; break;
-            default: Debug.Log("Unknown card selected."); break;
         }
 
-        // Ajoute dans le premier slot vide de ownedCardsObjects
         AddToOwnedCards(chosen);
 
         MenuUI.SetActive(false);
@@ -147,13 +134,9 @@ public class DrawingcardController : MonoBehaviour
             TMP_Text text = slot.GetComponentInChildren<TMP_Text>();
             if (text != null && string.IsNullOrEmpty(text.text))
             {
-                Image img = slot.GetComponent<Image>();
-                if (img != null)
-                    img.color = getColor(cardName);
-
+                slot.GetComponent<Image>().color = getColor(cardName);
                 text.text = cardName;
 
-                // Si la carte a un effet actif, ajoute le script DraggableCard
                 if (cardName == "2" || cardName == "3")
                 {
                     var draggable = slot.AddComponent<DraggableCard>();
@@ -161,12 +144,8 @@ public class DrawingcardController : MonoBehaviour
                     slot.AddComponent<CanvasGroup>();
                 }
 
-                Debug.Log($"Card {cardName} added to owned cards.");
                 return;
             }
         }
-
-        Debug.Log("No empty slot for new card!");
     }
-
 }

@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
-[RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(Collider))]
+[RequireComponent(typeof(Renderer))]
 public class Tile : MonoBehaviour
 {
     [Header("Règles")]
@@ -12,14 +12,14 @@ public class Tile : MonoBehaviour
     public Color okColor = new Color(0.5f, 1f, 0.5f, 1f);    // vert doux
     public Color badColor = new Color(1f, 0.5f, 0.5f, 1f);   // rouge doux
 
-    private SpriteRenderer sr;
+    private Renderer rend;
 
     public bool HasOccupant => transform.childCount > 0;
 
     void Awake()
     {
-        sr = GetComponent<SpriteRenderer>();
-        if (sr) sr.color = normalColor;
+        rend = GetComponent<Renderer>();
+        if (rend) rend.material.color = normalColor;
     }
 
     /// <summary>Indique si cette tuile peut accepter un prefab (ex: Tour, Nexus).</summary>
@@ -34,23 +34,24 @@ public class Tile : MonoBehaviour
     {
         if (!CanAccept(prefabToPlace)) return false;
 
-        var go = Instantiate(prefabToPlace, transform.position, Quaternion.identity, transform);
+        // Respecte la rotation du prefab
+        var go = Instantiate(prefabToPlace, transform.position, prefabToPlace.transform.rotation, transform);
         go.transform.localPosition = Vector3.zero; // centré
         return true;
     }
 
     public void SetHighlightNone()
     {
-        if (sr) sr.color = normalColor;
+        if (rend) rend.material.color = normalColor;
     }
 
     public void SetHighlightOK()
     {
-        if (sr) sr.color = okColor;
+        if (rend) rend.material.color = okColor;
     }
 
     public void SetHighlightBad()
     {
-        if (sr) sr.color = badColor;
+        if (rend) rend.material.color = badColor;
     }
 }

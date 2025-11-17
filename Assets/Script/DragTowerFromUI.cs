@@ -23,7 +23,7 @@ public class DragTowerFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     void Awake()
     {
-        TextForHover.SetActive(false);
+        if (TextForHover) TextForHover.SetActive(false);
         tileLayerMask = 1 << LayerMask.NameToLayer(tileLayerName);
 
         if (!dragRootCanvas)
@@ -114,21 +114,18 @@ public class DragTowerFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     private Tile GetTileUnderPointer(PointerEventData eventData)
     {
-        // Convertit écran → monde
-        Vector3 world;
-        if (eventData.pressEventCamera)
-            world = eventData.pressEventCamera.ScreenToWorldPoint(eventData.position);
-        else
-            world = Camera.main.ScreenToWorldPoint(eventData.position);
+        Camera cam = eventData.pressEventCamera ? eventData.pressEventCamera : Camera.main;
+        if (!cam) return null;
 
-        Vector2 world2D = new Vector2(world.x, world.y);
+        Ray ray = cam.ScreenPointToRay(eventData.position);
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, tileLayerMask))
+        {
+            var t = hit.collider.GetComponent<Tile>();
+            if (!t) t = hit.collider.GetComponentInParent<Tile>();
+            return t;
+        }
 
-        var hit = Physics2D.OverlapPoint(world2D, tileLayerMask);
-        if (!hit) return null;
-
-        var t = hit.GetComponent<Tile>();
-        if (!t) t = hit.GetComponentInParent<Tile>();
-        return t;
+        return null;
     }
 
     private void ClearHovered()
@@ -142,10 +139,10 @@ public class DragTowerFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        TextForHover.SetActive(true);
+        if (TextForHover) TextForHover.SetActive(true);
     }
     public void OnPointerExit(PointerEventData eventData)
     {
-        TextForHover.SetActive(false);
+        if (TextForHover) TextForHover.SetActive(false);
     }
 }

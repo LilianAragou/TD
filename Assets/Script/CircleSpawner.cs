@@ -93,7 +93,7 @@ public class CircleSpawner : MonoBehaviour
         for (int i = 0; i < pair.count; i++)
         {
             float angle = Random.Range(0f, Mathf.PI * 2f);
-            Vector3 pos = center + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * radius;
+            Vector3 pos = center + new Vector3(Mathf.Cos(angle),0f , Mathf.Sin(angle)) * radius;
 
             GameObject enemy = Instantiate(pair.prefab, pos, Quaternion.identity);
 
@@ -101,7 +101,7 @@ public class CircleSpawner : MonoBehaviour
             EnemyController ctrl = enemy.GetComponent<EnemyController>();
             if (ctrl != null)
             {
-                ctrl.SetMaxHealth(ctrl.maxHealth * hpMultiplier);
+                ctrl.SetHealth(ctrl.baseHealth * hpMultiplier);
             }
 
             activeEnemies.Add(enemy);

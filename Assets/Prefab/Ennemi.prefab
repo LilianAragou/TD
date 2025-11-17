@@ -101,13 +101,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abb3a905fa2d8cd48a3698c7d2562a76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 10
+  baseHealth: 600
   speed: 1
+  health: 100
+  gameManager: {fileID: 0}
+  maxHealth: 600
   target: {x: 0, y: 0, z: 0}
   direction: {x: 0, y: 0, z: 0}
   angle: 0
   reward: 10
-  gameManager: {fileID: 0}
+  secretSpeed: 0
+  amount: 0
+  timeLeft: 0
+  SkadiShotCalculator: 0
+  debuffDamage: 0
+  activeSlows: []
 --- !u!60 &885115706337584235
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -138,7 +146,7 @@ PolygonCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0

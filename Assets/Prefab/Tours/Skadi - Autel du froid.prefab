@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5933232975253726697}
   - component: {fileID: 7821811644688513742}
   - component: {fileID: 3390745684546973593}
-  - component: {fileID: 4240407972607869770}
+  - component: {fileID: 3427567562065497935}
   m_Layer: 0
   m_Name: Skadi - Autel du froid
   m_TagString: Tour
@@ -27,7 +27,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2340734015653979766}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0.17702103, y: -49.213154, z: 0}
   m_LocalScale: {x: 0.7, y: 0.7, z: 1}
   m_ConstrainProportionsScale: 0
@@ -35,7 +35,7 @@ Transform:
   - {fileID: 7939094003123343858}
   - {fileID: 1491724590721658553}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!212 &7821811644688513742
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -107,6 +107,7 @@ MonoBehaviour:
   attackDamage: 0
   attackCooldown: 0
   projectileSpeed: 0
+  cooldownTime: 0
   target: {fileID: 0}
   enemyTag: Enemy
   dmgType: Snow
@@ -117,17 +118,23 @@ MonoBehaviour:
   hasAFirstAttack: 0
   isAuraTower: 1
   isProjectileTower: 0
+  hasProjectileAura: 0
+  rotationSpeed: 5
+  projectileCount: 1
+  auraProjectilePrefab: {fileID: 0}
   firstShotCD: 0
---- !u!61 &4240407972607869770
-BoxCollider2D:
+  numberOfTargets: 1
+  hasPanickShot: 0
+  isBuffedByOdinEye: 0
+  canAim: 0
+  stockedDamage: 0
+--- !u!65 &3427567562065497935
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2340734015653979766}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -136,34 +143,12 @@ BoxCollider2D:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
   m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
-  m_EdgeRadius: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.99999994, y: 1.0000001, z: 0.20000005}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4835931481814360402
 GameObject:
   m_ObjectHideFlags: 0

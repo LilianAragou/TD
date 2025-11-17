@@ -8,41 +8,44 @@ public class PojectileController : MonoBehaviour
     public string towerID;
     public TowerController mummyTower;
     public GameObject aoePrefab;
-
+    public Transform centerPointForPatrol;
+    public float radiusForPatrol = 2f;
+    public bool isPatrol = false;
+    public float angleForPatrol = 0f;
+    public bool isPanickShot = false;
+    private float lifeTime=0f;
+    private float maxLifeTime = 5f;
     void Update()
     {
+        lifeTime += Time.deltaTime;
         if (target != null)
         {
             Vector3 direction = target.position - transform.position;
-            direction.z = 0;
+            direction.y = 0;
             direction.Normalize();
             transform.position += direction * speed * Time.deltaTime;
-
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.Euler(0, 0, angle);
-
 
             if (Vector3.Distance(transform.position, target.position) < 0.2f)
             {
                 EnemyController enemyHealth = target.GetComponent<EnemyController>();
-                if (enemyHealth != null)
+                if (enemyHealth != null || isPanickShot)
                 {
                     switch (towerID)
                     {
                         case "ThorTotem":
                             enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                             Destroy(gameObject);
                             return;
+                            break;
                         case "ThorHammer":
                             if (enemyHealth.health <= damage)
                             {
                                 enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                                 GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
                                 Transform best = null;
-                                Transform second = null;
-
                                 float bestDistToMe = Mathf.Infinity;
-                                float secondDistToMe = Mathf.Infinity;
 
                                 foreach (GameObject e in enemies)
                                 {
@@ -56,15 +59,8 @@ public class PojectileController : MonoBehaviour
                                     float distToMe = Vector3.Distance(transform.position, e.transform.position);
                                     if (distToMe < bestDistToMe)
                                     {
-                                        secondDistToMe = bestDistToMe;
                                         bestDistToMe = distToMe;
-                                        second = best;
                                         best = e.transform;
-
-                                    } else if (distToMe < secondDistToMe)
-                                    {
-                                        secondDistToMe = distToMe;
-                                        second = e.transform;
                                     }
                                 }
 
@@ -76,20 +72,11 @@ public class PojectileController : MonoBehaviour
                                 {
                                     Destroy(gameObject);
                                 }
-                                if (second != null && best != null && DrawingcardController.card1)
-                                {
-                                    GameObject newProjectile = Instantiate(gameObject, transform.position, Quaternion.identity);
-                                    PojectileController pc = newProjectile.GetComponent<PojectileController>();
-                                    pc.target = second;
-                                    pc.damage = damage;
-                                    pc.speed = speed;
-                                    pc.towerID = towerID;
-                                    pc.mummyTower = mummyTower;
-                                }
                             }
                             else
                             {
                                 enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                                 Destroy(gameObject);
                             }
                             break;
@@ -98,17 +85,11 @@ public class PojectileController : MonoBehaviour
                             foreach (var enemy in hitEnemies)
                             {
                                 enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                                 EnemyController enemyCtrl = enemy.GetComponent<EnemyController>();
                                 if (enemyCtrl != null)
                                 {
-                                    if (DrawingcardController.card4)
-                                    {
-                                        enemyCtrl.getStunned(1.5f);
-                                    }
-                                    else
-                                    {
-                                        enemyCtrl.getStunned(0.75f);
-                                    }
+                                    enemyCtrl.getStunned(0.75f);
                                 }
                             }
                             Destroy(gameObject);
@@ -116,15 +97,18 @@ public class PojectileController : MonoBehaviour
                         case "SkadiTower":
                             enemyHealth.getSlowed(10f, 3f, towerID);
                             enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                             Destroy(gameObject);
                             break;
                         case "SkadiCryo":
                             enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                             enemyHealth.SkadiShotCalculator += 1f;
                             Destroy(gameObject);
                             break;
                         case "NecroTower":
                             enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                             enemyHealth.DebuffDamage();
                             Destroy(gameObject);
                             return;
@@ -134,24 +118,25 @@ public class PojectileController : MonoBehaviour
                                 mummyTower.ReduceCooldown(0.1f);
                             }
                             enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                             enemyHealth.DebuffDamage();
                             Destroy(gameObject);
                             return;
                         case "VoidEye":
                             enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                             if (enemyHealth.health <= enemyHealth.maxHealth * 0.2f)
                             {
                                 enemyHealth.TakeDamage(enemyHealth.health + 1f, mummyTower.dmgType);
+                                mummyTower.stockedDamage+= (enemyHealth.health*0.2f);
                             }
                             Destroy(gameObject);
                             return;
-                        default:
-                            enemyHealth.TakeDamage(damage, mummyTower.dmgType);
-                            Destroy(gameObject);
-                            break;
                         case "RuneBrasero":
                             {
                                 enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                                
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
                                 Destroy(gameObject);
                                 return;
                             }
@@ -161,8 +146,8 @@ public class PojectileController : MonoBehaviour
                                 AOEManager aoeManager = aoe.GetComponent<AOEManager>();
                                 if (aoeManager != null)
                                 {
+                                    aoeManager.mummyTower = mummyTower;
                                     aoeManager.damage = damage;
-                                    aoeManager.dmgType = mummyTower.dmgType;
                                     aoeManager.radius = 0.8f;
                                     aoeManager.duration = 10f;
                                     aoeManager.tickInterval = 0.1f;
@@ -170,32 +155,69 @@ public class PojectileController : MonoBehaviour
                                 Destroy(gameObject);
                                 return;
                             }
-
-
+                        case "InfernalForge":
+                            {
+                                enemyHealth.TakeDamage(damage + (enemyHealth.maxHealth * 0.2f), mummyTower.dmgType);
+                                Destroy(gameObject);
+                                return;
+                            }
+                        case "BaldrRune":
+                            {
+                                enemyHealth.TakeDamage(damage, mummyTower.dmgType);
+                            mummyTower.stockedDamage+= damage*(1+enemyHealth.debuffDamage/100f);
+                                enemyHealth.getStunned(1.0f);
+                                Destroy(gameObject);
+                                return;
+                            }
+                        case "BaldrHeart":
+                            {
+                                float lifeRatio = Mathf.Clamp01(lifeTime / maxLifeTime);
+                                float extraDamage = Mathf.Lerp(1f, 0.1f, lifeRatio);
+                                enemyHealth.TakeDamage(damage*(10f/(lifeTime-Time.deltaTime)), mummyTower.dmgType);
+                                mummyTower.stockedDamage+= (damage*10f/(lifeTime-Time.deltaTime))*(1+enemyHealth.debuffDamage/100f);
+                                Destroy(gameObject);
+                                return;
+                            }
                     }
 
-                }
-                else if (towerID == "panickShot")
-                {
-                    GameObject aoe = Instantiate(aoePrefab, transform.position, Quaternion.identity);
-                    AOEManager aoeManager = aoe.GetComponent<AOEManager>();
-                    if (aoeManager != null)
-                    {
-                        aoeManager.damage = damage;
-                        aoeManager.radius = 0.8f;
-                        aoeManager.duration = 10f;
-                        aoeManager.tickInterval = 0.1f;
-                    }
-                    Destroy(gameObject);
-                    return;
                 }
             }
 
         }
-        if (target == null)
+        if (target == null && towerID != "TwinWind")
         {
             Destroy(gameObject);
             return;
+        }
+        else if (towerID == "TwinWind")
+        {
+            if (centerPointForPatrol != null && isPatrol)
+            {
+                angleForPatrol += speed * Time.deltaTime;
+                float x = centerPointForPatrol.position.x + radiusForPatrol * Mathf.Cos(angleForPatrol);
+                float y = centerPointForPatrol.position.y + radiusForPatrol * Mathf.Sin(angleForPatrol);
+                transform.position = new Vector3(x, 0, y);
+                float angle = angleForPatrol * Mathf.Rad2Deg;
+                transform.rotation = Quaternion.Euler(0, 0, angle);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Enemy") && towerID == "TwinWind")
+        {
+            EnemyController enemyHealth = collision.GetComponent<EnemyController>();
+            if (enemyHealth != null)
+            {
+                enemyHealth.getKnockBacked(0.5f, (enemyHealth.transform.position - transform.position).normalized);
+                enemyHealth.TakeDamage(damage, mummyTower.dmgType   );
+            }
         }
     }
 }

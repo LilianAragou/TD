@@ -138,3 +138,8 @@ MonoBehaviour:
   towerID: 
   mummyTower: {fileID: 0}
   aoePrefab: {fileID: 1027105917405568975, guid: 26bda3e36b798f140be490ddfa212225, type: 3}
+  centerPointForPatrol: {fileID: 0}
+  radiusForPatrol: 2
+  isPatrol: 0
+  angleForPatrol: 0
+  isPanickShot: 0

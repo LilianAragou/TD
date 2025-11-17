@@ -39,15 +39,16 @@ public class TileManager : MonoBehaviour
         {
             for (int y = 0; y < gridSize; y++)
             {
-                Vector3 pos = new Vector3((x - offset) * tileSpacing, (y - offset) * tileSpacing, 0f);
-                GameObject tile = Instantiate(tilePrefab, pos, Quaternion.identity, transform);
+                Vector3 pos = new Vector3((x - offset) * tileSpacing,  0f, (y - offset) * tileSpacing);
+                // Respecte la rotation du prefab
+                GameObject tile = Instantiate(tilePrefab, pos, tilePrefab.transform.rotation, transform);
                 tile.name = $"Tile_{x}_{y}";
                 if (tileLayer >= 0) tile.layer = tileLayer;
 
-                // Assure Collider2D
-                var col = tile.GetComponent<Collider2D>();
-                if (!col) col = tile.AddComponent<BoxCollider2D>();
-                col.isTrigger = true;
+                // Assure Collider 3D non-trigger pour le raycast
+                var col = tile.GetComponent<Collider>();
+                if (!col) col = tile.AddComponent<BoxCollider>();
+                col.isTrigger = false;
 
                 // Assure Tile.cs
                 if (!tile.GetComponent<Tile>()) tile.AddComponent<Tile>();
@@ -76,7 +77,6 @@ public class TileManager : MonoBehaviour
                 Debug.LogWarning("TileManager: Impossible de poser le Nexus (tuile occupée ?).");
             else
             {
-                // Sécurise le tag si besoin
                 var placed = centerTile.transform.GetChild(centerTile.transform.childCount - 1).gameObject;
                 if (placed && placed.tag != "Nexus") placed.tag = "Nexus";
             }
