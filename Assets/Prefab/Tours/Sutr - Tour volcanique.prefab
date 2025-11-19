@@ -225,10 +225,13 @@ MonoBehaviour:
   attackDamage: 30
   attackCooldown: 10
   projectileSpeed: 5
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 128
   cooldownTime: 0
   target: {fileID: 0}
   enemyTag: Enemy
-  dmgType: 
+  dmgType: 0
   towerID: VolcanoTower
   firePoint: {fileID: 8984617073117343204}
   projectilePrefab: {fileID: 4838475263919451661, guid: 2e86dd08ebf88f84d81d9db4ee76720f, type: 3}
@@ -246,6 +249,12 @@ MonoBehaviour:
   isBuffedByOdinEye: 0
   canAim: 0
   stockedDamage: 0
+  foudrebuffed: 0
+  foudrebuffedapplied: 0
+  orageActive: 0
+  orageDamage: 0
+  orageTimer: 0
+  orageTickRate: 0.1
 --- !u!65 &5366518696461679672
 BoxCollider:
   m_ObjectHideFlags: 0

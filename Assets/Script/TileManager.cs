@@ -4,15 +4,16 @@ public class TileManager : MonoBehaviour
 {
     [Header("Grille")]
     public int gridSize = 5;            // 5x5
-    public float tileSpacing = 1.1f;
+    public float tileSpacing = 1.1f;    // Espace entre les centres des tuiles
     public GameObject tilePrefab;
 
     [Header("Prefabs")]
-    public GameObject nexusPrefab;      // à poser au centre (tag "Nexus")
+    public GameObject nexusPrefab;      // à poser au centre
 
     [Header("Layers & Tags")]
-    public string tileLayerName = "Tile"; // créer le Layer "Tile" dans Project Settings
+    public string tileLayerName = "Tile"; // IMPORTANT : Créer ce Layer dans Unity
 
+    // Accesseur public pour d'autres scripts
     public GameObject[,] tiles { get; private set; }
 
     void Start()
@@ -25,32 +26,46 @@ public class TileManager : MonoBehaviour
     {
         if (!tilePrefab)
         {
-            Debug.LogError("TileManager: Aucun tilePrefab assigné.");
+            Debug.LogError("TileManager: Aucun tilePrefab assigné !");
             return;
         }
 
         tiles = new GameObject[gridSize, gridSize];
+        
+        // Calcul de l'offset pour que la grille soit centrée sur (0,0,0)
         float offset = (gridSize - 1) / 2f;
 
+        // Récupération sécurisée du Layer
         int tileLayer = LayerMask.NameToLayer(tileLayerName);
-        if (tileLayer < 0) Debug.LogWarning($"Layer \"{tileLayerName}\" introuvable. Pense à le créer.");
+        if (tileLayer < 0) 
+        {
+            Debug.LogWarning($"Attention: Le Layer '{tileLayerName}' n'existe pas. Les tuiles seront sur 'Default'.");
+            tileLayer = LayerMask.NameToLayer("Default");
+        }
 
         for (int x = 0; x < gridSize; x++)
         {
             for (int y = 0; y < gridSize; y++)
             {
-                Vector3 pos = new Vector3((x - offset) * tileSpacing,  0f, (y - offset) * tileSpacing);
-                // Respecte la rotation du prefab
+                // Positionnement sur le plan X/Z (Y=0)
+                Vector3 pos = new Vector3((x - offset) * tileSpacing, 0f, (y - offset) * tileSpacing);
+                
+                // Instantiation
                 GameObject tile = Instantiate(tilePrefab, pos, tilePrefab.transform.rotation, transform);
                 tile.name = $"Tile_{x}_{y}";
-                if (tileLayer >= 0) tile.layer = tileLayer;
+                tile.layer = tileLayer;
 
-                // Assure Collider 3D non-trigger pour le raycast
-                var col = tile.GetComponent<Collider>();
-                if (!col) col = tile.AddComponent<BoxCollider>();
-                col.isTrigger = false;
+                // --- SÉCURITÉ COLLIDER ---
+                // On ne rajoute un BoxCollider que si le prefab n'en a pas déjà un (MeshCollider, etc.)
+                Collider col = tile.GetComponent<Collider>();
+                if (col == null) 
+                {
+                    col = tile.AddComponent<BoxCollider>();
+                }
+                // Important pour le Raycast de placement de tour : ce n'est PAS un trigger
+                col.isTrigger = false; 
 
-                // Assure Tile.cs
+                // Ajout du script logique Tile s'il manque
                 if (!tile.GetComponent<Tile>()) tile.AddComponent<Tile>();
 
                 tiles[x, y] = tile;
@@ -62,28 +77,43 @@ public class TileManager : MonoBehaviour
     {
         if (!nexusPrefab)
         {
-            Debug.LogWarning("TileManager: Aucun nexusPrefab assigné, le centre restera vide.");
+            Debug.LogWarning("TileManager: Aucun nexusPrefab assigné.");
             return;
         }
 
-        int c = gridSize / 2; // pour 5 -> 2
+        // Trouver le centre de la grille
+        int c = gridSize / 2; 
         var centerTile = tiles[c, c];
         var tileComp = centerTile.GetComponent<Tile>();
 
-        if (tileComp && tileComp.CanAccept(nexusPrefab))
+        if (tileComp != null && tileComp.CanAccept(nexusPrefab))
         {
-            var ok = tileComp.TryPlace(nexusPrefab);
-            if (!ok)
-                Debug.LogWarning("TileManager: Impossible de poser le Nexus (tuile occupée ?).");
-            else
+            bool ok = tileComp.TryPlace(nexusPrefab);
+            if (ok)
             {
-                var placed = centerTile.transform.GetChild(centerTile.transform.childCount - 1).gameObject;
-                if (placed && placed.tag != "Nexus") placed.tag = "Nexus";
+                // Récupère l'objet Nexus qu'on vient de placer (c'est le dernier enfant)
+                Transform nexusTransform = centerTile.transform.GetChild(centerTile.transform.childCount - 1);
+                
+                // Force le Tag "Nexus" pour la logique de jeu
+                if (!nexusTransform.CompareTag("Nexus")) 
+                {
+                    nexusTransform.tag = "Nexus";
+                }
+                
+                // Ajoute un Collider au Nexus si nécessaire (pour être ciblé)
+                if (nexusTransform.GetComponent<Collider>() == null)
+                {
+                    var box = nexusTransform.gameObject.AddComponent<BoxCollider>();
+                    box.isTrigger = false; 
+                    // Ajuste la taille selon le modèle (approximatif)
+                    box.size = new Vector3(1, 2, 1); 
+                    box.center = new Vector3(0, 1, 0);
+                }
             }
         }
         else
         {
-            Debug.LogWarning("TileManager: La tuile centrale ne peut pas accepter le Nexus.");
+            Debug.LogWarning("TileManager: Impossible de placer le Nexus au centre (Tuile occupée ou invalide).");
         }
     }
 }

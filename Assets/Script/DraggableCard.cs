@@ -4,13 +4,13 @@ using UnityEngine.UI;
 
 public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public string cardID; // "2" ou "3" (carte active)
+    public string cardID; // "2" ou "3"
     
     private Canvas canvas;
     private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
     private Vector3 originalPosition;
-    private GameObject tempCard; // copie temporaire
+    private GameObject tempCard;
 
     void Awake()
     {
@@ -19,25 +19,48 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         canvas = GetComponentInParent<Canvas>();
     }
 
+    // --- AJOUT : Gestion visuelle (Griser) ---
+    void Update()
+    {
+        if (canvasGroup == null) return;
+
+        bool active = IsCardActive();
+
+        if (active)
+        {
+            canvasGroup.alpha = 1f; // Visible
+            canvasGroup.blocksRaycasts = true; // On peut cliquer/drag
+        }
+        else
+        {
+            canvasGroup.alpha = 0.3f; // Grisé / Transparent
+            canvasGroup.blocksRaycasts = false; // On ne peut pas drag
+        }
+    }
+    // -----------------------------------------
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!IsCardActive()) return;
 
         originalPosition = rectTransform.position;
-        canvasGroup.alpha = 0.6f;
+        canvasGroup.alpha = 0.6f; // Légère transparence pendant le drag
 
-        // Crée une copie visuelle temporaire
+        // Copie visuelle
         tempCard = Instantiate(gameObject, canvas.transform);
-        Destroy(tempCard.GetComponent<DraggableCard>()); // la copie ne doit pas être draggable
-        tempCard.transform.SetAsLastSibling(); // s'affiche au-dessus
-        tempCard.GetComponent<CanvasGroup>().blocksRaycasts = false;
+        Destroy(tempCard.GetComponent<DraggableCard>()); // La copie n'a pas de logique
+        
+        tempCard.transform.SetAsLastSibling();
+        
+        // Important : la copie ne doit pas bloquer les rayons pour que le Raycast 3D marche dessous
+        CanvasGroup tempCG = tempCard.GetComponent<CanvasGroup>();
+        if (tempCG) tempCG.blocksRaycasts = false; 
     }
 
     public void OnDrag(PointerEventData eventData)
     {
         if (tempCard == null) return;
 
-        // Fait suivre la souris par la copie
         RectTransform tempRect = tempCard.GetComponent<RectTransform>();
         Vector2 pos;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
@@ -51,18 +74,22 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (!IsCardActive()) return;
-
-        canvasGroup.alpha = 1f;
+        canvasGroup.alpha = 1f; // Reset opacité si on lâche (sera écrasé par Update de toute façon)
         if (tempCard != null) Destroy(tempCard);
 
-        // Raycast vers la scène pour détecter une tour
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit2D hit = Physics2D.GetRayIntersection(ray);
+        if (!IsCardActive()) 
+        {
+            ResetCard();
+            return;
+        }
 
-        if (hit.collider != null)
+        // Raycast 3D
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit))
         {
             TowerController tower = hit.collider.GetComponent<TowerController>();
+            if (tower == null) tower = hit.collider.GetComponentInParent<TowerController>();
+
             if (tower != null)
             {
                 ApplyCardEffectToTower(tower);
@@ -71,34 +98,37 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             }
         }
 
-        // Sinon, retour à la position d’origine
-        rectTransform.position = originalPosition;
+        ResetCard();
     }
 
+    // Vérifie l'état statique dans DrawingcardController
     private bool IsCardActive()
     {
-        if (cardID == "2") return DrawingcardController.card2 && DrawingcardController.card2Timer <= 0f;
-        if (cardID == "3") return DrawingcardController.card3 && !DrawingcardController.card3Used;
+        if (cardID == "2") 
+        {
+            // Dispo si on possède la carte ET que le timer est fini (<= 0)
+            return DrawingcardController.card2 && DrawingcardController.card2Timer <= 0f;
+        }
+        if (cardID == "3") 
+        {
+            // Dispo si on possède la carte ET qu'elle n'est pas marquée comme utilisée
+            return DrawingcardController.card3 && !DrawingcardController.card3Used;
+        }
         return false;
     }
 
     private void ApplyCardEffectToTower(TowerController tower)
     {
-        Debug.Log($"Card {cardID} applied to tower: {tower.name}");
-
         switch (cardID)
         {
-            case "2":
-                tower.Orage(
-                    DrawingcardController.card2Damage,
-                    DrawingcardController.card2Duration
-                );
-                DrawingcardController.card2Timer = DrawingcardController.card2Cooldown;
+            case "2": // Orage
+                tower.Orage(DrawingcardController.card2Damage, DrawingcardController.card2Duration);
+                DrawingcardController.card2Timer = DrawingcardController.card2Cooldown; // Lance le cooldown
                 break;
 
-            case "3":
+            case "3": // Buff
                 tower.BuffFoudre();
-                DrawingcardController.card3Used = true;
+                DrawingcardController.card3Used = true; // Marque comme utilisée
                 break;
         }
     }

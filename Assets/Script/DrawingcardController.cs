@@ -18,9 +18,10 @@ public class DrawingcardController : MonoBehaviour
     public GameManager gameManager;
     public TextMeshProUGUI rerollbutton;
 
+    // ATTENTION : Les variables statiques restent entre les scènes.
     public static bool card1 = false;
     public static bool card2 = false;
-    public static float card2Cooldown = 90f;
+    public static float card2Cooldown = 15f; 
     public static float card2Timer = 0f;
     public static float card2Duration = 15f;
     public static float card2Damage = 20f;
@@ -32,6 +33,7 @@ public class DrawingcardController : MonoBehaviour
     void Start()
     {
         MenuUI.SetActive(false);
+        ResetStatics(); // Sécurité pour nettoyer les vieilles parties
 
         foreach (GameObject slot in ownedCardsObjects)
         {
@@ -43,12 +45,27 @@ public class DrawingcardController : MonoBehaviour
         }
     }
 
+    // Petite méthode pour nettoyer l'état si on relance le jeu
+    void ResetStatics()
+    {
+        card1 = false; card2 = false; card3 = false; card4 = false; card5 = false;
+        card2Timer = 0f;
+        card3Used = false;
+    }
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.D))
             drawCard(false);
 
-        rerollbutton.text = "Reroll = " + rerollCost + "$";
+        if (rerollbutton)
+            rerollbutton.text = "Reroll = " + rerollCost + "$";
+
+        // --- GESTION DU COOLDOWN ---
+        if (card2Timer > 0f)
+        {
+            card2Timer -= Time.deltaTime;
+        }
     }
 
     void drawCard(bool reroll)
@@ -83,20 +100,13 @@ public class DrawingcardController : MonoBehaviour
             "3" => new Color(0f, 0f, 1f, 1f),
             "4" => new Color(1f, 1f, 0f, 1f),
             "5" => new Color(1f, 0f, 1f, 1f),
-            "6" => new Color(0f, 1f, 1f, 1f),
-            "7" => new Color(1f, 0.5f, 0f, 1f),
-            "8" => new Color(0.5f, 1f, 0f, 1f),
-            "9" => new Color(0f, 0.5f, 1f, 1f),
-            "10" => new Color(1f, 0f, 0.5f, 1f),
-            "11" => new Color(0.5f, 0f, 1f, 1f),
-            "12" => new Color(0f, 1f, 0.5f, 1f),
             _ => new Color(0.2f, 0.2f, 0.2f, 1f),
         };
     }
 
     public void rerollCard()
     {
-        if (gameManager.money >= rerollCost)
+        if (gameManager != null && gameManager.money >= rerollCost)
         {
             gameManager.money -= rerollCost;
             drawCard(true);
@@ -132,18 +142,31 @@ public class DrawingcardController : MonoBehaviour
         foreach (GameObject slot in ownedCardsObjects)
         {
             TMP_Text text = slot.GetComponentInChildren<TMP_Text>();
+            // On cherche un slot vide
             if (text != null && string.IsNullOrEmpty(text.text))
             {
                 slot.GetComponent<Image>().color = getColor(cardName);
                 text.text = cardName;
 
+                // Ajout de la logique Draggable si c'est une carte active (2 ou 3)
                 if (cardName == "2" || cardName == "3")
                 {
-                    var draggable = slot.AddComponent<DraggableCard>();
-                    draggable.cardID = cardName;
-                    slot.AddComponent<CanvasGroup>();
-                }
+                    // CORRECTION CRITIQUE ICI :
+                    // 1. On ajoute le CanvasGroup EN PREMIER
+                    if (slot.GetComponent<CanvasGroup>() == null) 
+                        slot.AddComponent<CanvasGroup>();
 
+                    // 2. ENSUITE on ajoute le script DraggableCard
+                    // Cela garantit que DraggableCard trouvera le CanvasGroup dans son Awake()
+                    var existingDrag = slot.GetComponent<DraggableCard>();
+                    if (existingDrag == null) 
+                    {
+                        existingDrag = slot.AddComponent<DraggableCard>();
+                    }
+                    
+                    // 3. On configure la carte
+                    existingDrag.cardID = cardName;
+                }
                 return;
             }
         }

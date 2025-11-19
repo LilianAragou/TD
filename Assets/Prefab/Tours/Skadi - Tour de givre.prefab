@@ -107,27 +107,33 @@ MonoBehaviour:
   attackDamage: 20
   attackCooldown: 0.1
   projectileSpeed: 5
-  cooldownTime: 0
-  target: {fileID: 0}
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 128
   enemyTag: Enemy
-  dmgType: Snow
+  dmgType: 1
   towerID: SkadiTower
   firePoint: {fileID: 4895165210116928087}
   projectilePrefab: {fileID: 4838475263919451661, guid: 2e86dd08ebf88f84d81d9db4ee76720f, type: 3}
   rangeaura: {fileID: 5490109736760699082}
+  auraProjectilePrefab: {fileID: 0}
   hasAFirstAttack: 0
   isAuraTower: 0
   isProjectileTower: 1
   hasProjectileAura: 0
+  canAim: 0
+  hasPanickShot: 0
   rotationSpeed: 5
   projectileCount: 1
-  auraProjectilePrefab: {fileID: 0}
-  firstShotCD: 0
   numberOfTargets: 1
-  hasPanickShot: 0
-  isBuffedByOdinEye: 0
-  canAim: 0
+  firstShotCD: 0
+  cooldownTime: 0
   stockedDamage: 0
+  target: {fileID: 0}
+  isBuffedByOdinEye: 0
+  foudrebuffed: 0
+  orageActive: 0
+  orageTickRate: 0.1
 --- !u!65 &3671084753648728614
 BoxCollider:
   m_ObjectHideFlags: 0

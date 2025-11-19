@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 6258296124088100037}
   - component: {fileID: 9147882012066978283}
   - component: {fileID: 7586621917057304080}
-  - component: {fileID: 885115706337584235}
-  m_Layer: 0
+  - component: {fileID: 3658056378165793929}
+  m_Layer: 7
   m_Name: Porteur
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -101,8 +101,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abb3a905fa2d8cd48a3698c7d2562a76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  baseHealth: 100
   speed: 1
-  baseSpeed: 1
   health: 10
   gameManager: {fileID: 0}
   maxHealth: 700
@@ -121,20 +121,21 @@ MonoBehaviour:
   isSanglier: 0
   isFoudroye: 0
   isPorteur: 1
+  isChef: 0
+  isClerc: 0
+  chefRange: 1.5
+  clercRange: 1.5
   traveled: 0
+  activeSlows: []
   resistances: 00000000
   faiblesses: 05000000
-  activeSlows: []
---- !u!60 &885115706337584235
-PolygonCollider2D:
+--- !u!136 &3658056378165793929
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1295372189224343000}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -143,40 +144,11 @@ PolygonCollider2D:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 0.5}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Points:
-    m_Paths:
-    - - {x: -0.014003277, y: 0.25}
-      - {x: -0.50833774, y: 0.010668278}
-      - {x: -0.5, y: -0.015625}
-      - {x: -0.026955366, y: -0.25}
-      - {x: 0.02734375, y: -0.25}
-      - {x: 0.501668, y: -0.009000301}
-      - {x: 0.501668, y: 0.0072870255}
-      - {x: 0.008612156, y: 0.2516675}
-  m_UseDelaunayMesh: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.49999997
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 1, z: 0}
