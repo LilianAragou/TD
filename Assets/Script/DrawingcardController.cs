@@ -33,7 +33,7 @@ public class DrawingcardController : MonoBehaviour
     void Start()
     {
         MenuUI.SetActive(false);
-        ResetStatics(); // Sécurité pour nettoyer les vieilles parties
+        ResetStatics(); 
 
         foreach (GameObject slot in ownedCardsObjects)
         {
@@ -45,7 +45,6 @@ public class DrawingcardController : MonoBehaviour
         }
     }
 
-    // Petite méthode pour nettoyer l'état si on relance le jeu
     void ResetStatics()
     {
         card1 = false; card2 = false; card3 = false; card4 = false; card5 = false;
@@ -55,13 +54,33 @@ public class DrawingcardController : MonoBehaviour
 
     void Update()
     {
+        // MODIFICATION 1 : LOGIQUE DE TOGGLE (OUVRIR/FERMER)
         if (Input.GetKeyDown(KeyCode.D))
-            drawCard(false);
+        {
+            if (MenuUI.activeSelf)
+            {
+                // Si ouvert, on ferme
+                MenuUI.SetActive(false);
+            }
+            else
+            {
+                // Si fermé, on ouvre.
+                // Si la main est vide (premier lancement), on pioche.
+                if (drawnCards.Count == 0)
+                {
+                    drawCard(false);
+                }
+                else
+                {
+                    // Sinon on affiche juste la main existante (qui a été pré-rollée)
+                    MenuUI.SetActive(true);
+                }
+            }
+        }
 
         if (rerollbutton)
             rerollbutton.text = "Reroll = " + rerollCost + "$";
 
-        // --- GESTION DU COOLDOWN ---
         if (card2Timer > 0f)
         {
             card2Timer -= Time.deltaTime;
@@ -70,24 +89,36 @@ public class DrawingcardController : MonoBehaviour
 
     void drawCard(bool reroll)
     {
-        if (!reroll)
-            temporaryCards = new List<string>(cards);
+        // On remplit la liste temporaire avec TOUTES les cartes restantes
+        temporaryCards = new List<string>(cards);
 
         drawnCards.Clear();
 
         for (int i = 0; i < handSize; i++)
         {
-            if (temporaryCards.Count == 0) break;
+            Image slotImage = cardsObjects[i].GetComponent<Image>();
 
-            int randomIndex = Random.Range(0, temporaryCards.Count);
-            string drawnCard = temporaryCards[randomIndex];
+            if (temporaryCards.Count > 0)
+            {
+                // Cas normal : Il reste des cartes
+                int randomIndex = Random.Range(0, temporaryCards.Count);
+                string drawnCard = temporaryCards[randomIndex];
 
-            drawnCards.Add(drawnCard);
-            cardsObjects[i].GetComponent<Image>().color = getColor(drawnCard);
+                drawnCards.Add(drawnCard);
+                slotImage.color = getColor(drawnCard);
 
-            temporaryCards.RemoveAt(randomIndex);
+                // On retire de la liste temporaire pour éviter les doublons dans la main actuelle
+                temporaryCards.RemoveAt(randomIndex);
+            }
+            else
+            {
+                // Cas vide : Cartes noires
+                drawnCards.Add("EMPTY");
+                slotImage.color = Color.black;
+            }
         }
 
+        // On affiche le menu à la fin du tirage
         MenuUI.SetActive(true);
     }
 
@@ -109,7 +140,7 @@ public class DrawingcardController : MonoBehaviour
         if (gameManager != null && gameManager.money >= rerollCost)
         {
             gameManager.money -= rerollCost;
-            drawCard(true);
+            drawCard(true); 
             rerollCost *= 2;
         }
     }
@@ -117,11 +148,21 @@ public class DrawingcardController : MonoBehaviour
     public void IChooseCard(float cardIndex)
     {
         int index = (int)cardIndex;
+        
         if (index < 0 || index >= drawnCards.Count) return;
 
         string chosen = drawnCards[index];
-        cards.Remove(chosen);
 
+        // Sécurité Clic sur case vide
+        if (chosen == "EMPTY") return;
+
+        // Suppression définitive du pool global
+        if (cards.Contains(chosen))
+        {
+            cards.Remove(chosen);
+        }
+
+        // Activation
         switch (chosen)
         {
             case "1": card1 = true; break;
@@ -133,8 +174,13 @@ public class DrawingcardController : MonoBehaviour
 
         AddToOwnedCards(chosen);
 
+        // MODIFICATION 2 : AUTO-REROLL POUR LA PROCHAINE FOIS
+        // 1. On génère immédiatement la nouvelle main avec les cartes restantes (sans payer)
+        drawCard(false);
+        
+        // 2. Mais on ferme le menu tout de suite pour ne pas gêner le joueur.
+        // La prochaine fois qu'il appuiera sur 'D', la main sera déjà prête.
         MenuUI.SetActive(false);
-        drawnCards.Clear();
     }
 
     void AddToOwnedCards(string cardName)
@@ -142,29 +188,21 @@ public class DrawingcardController : MonoBehaviour
         foreach (GameObject slot in ownedCardsObjects)
         {
             TMP_Text text = slot.GetComponentInChildren<TMP_Text>();
-            // On cherche un slot vide
             if (text != null && string.IsNullOrEmpty(text.text))
             {
                 slot.GetComponent<Image>().color = getColor(cardName);
                 text.text = cardName;
 
-                // Ajout de la logique Draggable si c'est une carte active (2 ou 3)
                 if (cardName == "2" || cardName == "3")
                 {
-                    // CORRECTION CRITIQUE ICI :
-                    // 1. On ajoute le CanvasGroup EN PREMIER
                     if (slot.GetComponent<CanvasGroup>() == null) 
                         slot.AddComponent<CanvasGroup>();
 
-                    // 2. ENSUITE on ajoute le script DraggableCard
-                    // Cela garantit que DraggableCard trouvera le CanvasGroup dans son Awake()
                     var existingDrag = slot.GetComponent<DraggableCard>();
                     if (existingDrag == null) 
                     {
                         existingDrag = slot.AddComponent<DraggableCard>();
                     }
-                    
-                    // 3. On configure la carte
                     existingDrag.cardID = cardName;
                 }
                 return;

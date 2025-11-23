@@ -1,7 +1,9 @@
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using System.Collections.Generic;
-public enum DamageType { Feu, Snow, Terre, Air, Necrotique, Foudre, Base }
+
+
+ public enum DamageType { Feu, Snow, Terre, Air, Necrotique, Foudre, Base }
+
 public class EnemyController : MonoBehaviour
 {
     [Header("Stats de base")]
@@ -22,6 +24,7 @@ public class EnemyController : MonoBehaviour
     public float timeLeft;
     public float SkadiShotCalculator = 0f;
     public float debuffDamage = 0f;
+
     [Header("Unit")]
     public bool slowImmune = false;
     public float slowImmuneTimer = 1.0f;
@@ -37,6 +40,17 @@ public class EnemyController : MonoBehaviour
     public float traveled = 0f;
     private float berserkDamage = 0f;
 
+    [Header("Diminishing Returns (Stun)")]
+    public float stunResetTime = 5f;     // Temps sans stun pour revenir à la normale
+    public float stunDecay = 0.8f;       // Facteur de réduction (0.8 = 80% de la durée précédente)
+    public float minStunDuration = 0.1f; // Durée minimum d'un stun
+
+    // Variables internes pour le Stun
+    private float currentStunMultiplier = 1f;
+    private float lastStunEndTime = -10f; 
+    private float savedSpeedBeforeStun = -1f; // -1 signifie "pas sauvegardé"
+    private Coroutine currentStunRoutine;
+
     [System.Serializable]
     public class SlowEffect
     {
@@ -50,15 +64,20 @@ public class EnemyController : MonoBehaviour
     public List<DamageType> resistances = new List<DamageType>();
     public List<DamageType> faiblesses = new List<DamageType>();
 
+    private Dictionary<string, Coroutine> activeDots = new Dictionary<string, Coroutine>();
+
     void Awake()
     {
-        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        // Recherche sécurisée du GameManager
+        GameObject gmObj = GameObject.Find("GameManager");
+        if (gmObj) gameManager = gmObj.GetComponent<GameManager>();
+        
         secretSpeed = speed;
     }
 
     void Start()
     {
-        gameManager = FindObjectOfType<GameManager>();
+        if (gameManager == null) gameManager = FindObjectOfType<GameManager>();
         target = Vector3.zero;
         health = maxHealth;
     }
@@ -67,6 +86,7 @@ public class EnemyController : MonoBehaviour
     {
         float currentSpeed = speed;
 
+        // Gestion des ralentissements (Slows)
         for (int i = activeSlows.Count - 1; i >= 0; i--)
         {
             activeSlows[i].timeLeft -= Time.deltaTime;
@@ -80,17 +100,25 @@ public class EnemyController : MonoBehaviour
 
         secretSpeed = currentSpeed;
 
-        if (SkadiShotCalculator == 3f)
+        // Mécanique Skadi (3 coups = stun)
+        if (SkadiShotCalculator >= 3f) // >= par sécurité
         {
             getStunned(0.75f);
             SkadiShotCalculator = 0f;
         }
 
-        target = Vector3.zero;
+        // Mouvement
+        target = Vector3.zero; // Target semble inutilisé ou reset ici ?
         direction = (target - transform.position).normalized;
+        
+        // Note: Si 'speed' est mis à 0 par le stun, 'currentSpeed' et 'secretSpeed' vaudront 0 ici.
         transform.position += direction * secretSpeed * Time.deltaTime;
-        angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        
+        if (direction != Vector3.zero)
+        {
+            angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0, 0, angle);
+        }
     }
 
     void OnTriggerEnter(Collider collision)
@@ -100,7 +128,6 @@ public class EnemyController : MonoBehaviour
             Destroy(gameObject);
         }
     }
-
 
     public void TakeDamage(float damage, DamageType type)
     {
@@ -116,12 +143,12 @@ public class EnemyController : MonoBehaviour
         if (type == DamageType.Foudre && isFoudroye)
         {
             health += maxHealth * 0.5f;
-            if (health > maxHealth)
-                health = maxHealth;
+            if (health > maxHealth) health = maxHealth;
         }
         if (isBerserk)
         {
             var reduction = berserkDamage / 100f;
+            // Attention boucle potentiellement lourde si berserkDamage est grand
             for (int i = 0; i < reduction; i += 1)
             {
                 damage *= 0.90f;
@@ -135,6 +162,7 @@ public class EnemyController : MonoBehaviour
 
         health -= damage;
         berserkDamage += damage;
+        
         if (health <= 0f)
             Die();
     }
@@ -142,30 +170,72 @@ public class EnemyController : MonoBehaviour
     private void Die()
     {
         if (gameManager != null)
-            gameManager.money += 10;
+            gameManager.money += 10; // Valeur en dur, à changer par 'reward' si voulu
 
         Destroy(gameObject);
     }
 
+    // --- SYSTÈME DE STUN (Diminishing Returns) ---
     public void getStunned(float duration)
     {
-        StartCoroutine(StunCoroutine(duration));
+        // 1. Vérifier si on doit RESET la résistance (Si le dernier stun est fini depuis assez longtemps)
+        // On utilise Time.time > lastStunEndTime + stunResetTime
+        if (Time.time > lastStunEndTime + stunResetTime)
+        {
+            currentStunMultiplier = 1f; // Reset complet
+        }
+
+        // 2. Calculer la durée réelle
+        float effectiveDuration = duration * currentStunMultiplier;
+
+        // Cap minimal pour que le stun serve quand même à quelque chose (ex: interruption)
+        if (effectiveDuration < minStunDuration) effectiveDuration = minStunDuration;
+
+        // 3. Appliquer la réduction pour le PROCHAIN stun
+        currentStunMultiplier *= stunDecay;
+
+        // 4. Lancer la coroutine
+        // Si on est déjà stun, on arrête l'ancien timer et on lance le nouveau (Refresh)
+        if (currentStunRoutine != null) StopCoroutine(currentStunRoutine);
+        currentStunRoutine = StartCoroutine(StunCoroutine(effectiveDuration));
+        
+        // Debug optionnel
+        // Debug.Log($"Stun appliqué : {effectiveDuration}s (Prochain facteur : {currentStunMultiplier})");
     }
+
     private System.Collections.IEnumerator StunCoroutine(float duration)
     {
-        float originalSpeed = speed;
-        speed = 0f;
+        // SAUVEGARDE SÉCURISÉE :
+        // Si savedSpeedBeforeStun est à -1, c'est qu'on n'est pas encore stun. On sauvegarde la vitesse actuelle.
+        // Si elle est différente de -1, c'est qu'on est DÉJÀ stun (vitesse 0), donc on ne touche pas à la sauvegarde originale.
+        if (savedSpeedBeforeStun == -1f)
+        {
+            savedSpeedBeforeStun = speed;
+            speed = 0f;
+        }
+
+        // On définit l'heure de fin pour le calcul du Reset
+        lastStunEndTime = Time.time + duration;
+
         yield return new WaitForSeconds(duration);
-        speed = originalSpeed;
+
+        // FIN DU STUN
+        // On rétablit la vitesse d'origine
+        if (savedSpeedBeforeStun != -1f)
+        {
+            speed = savedSpeedBeforeStun;
+            savedSpeedBeforeStun = -1f; // On reset le flag pour dire "je ne suis plus stun"
+        }
+        
+        currentStunRoutine = null;
     }
+    // ---------------------------------------------
+
     public void getSlowed(float slowAmount, float duration, string towerID)
     {
         foreach (var s in activeSlows)
         {
-            if (s.towerID == towerID)
-            {
-                return;
-            }
+            if (s.towerID == towerID) return; // Pas de stack du même ID
         }
         activeSlows.Add(new SlowEffect { amount = slowAmount, timeLeft = duration, towerID = towerID });
     }
@@ -175,6 +245,7 @@ public class EnemyController : MonoBehaviour
         baseHealth = newHealth;
         health = newHealth;
     }
+
     public void getAuraEffect(string towerID, TowerController tower)
     {
         switch (towerID)
@@ -183,9 +254,11 @@ public class EnemyController : MonoBehaviour
                 getSlowed(55f, 1f, towerID);
                 break;
             case "WindTotem":
-            if (tower.cooldownTime <= 0f){
+                if (tower.cooldownTime <= 0f)
+                {
                     getKnockBacked(1f, (transform.position - tower.transform.position).normalized);
-                    tower.cooldownTime = tower.attackCooldown;}
+                    tower.cooldownTime = tower.attackCooldown;
+                }
                 break;
         }
     }
@@ -193,32 +266,27 @@ public class EnemyController : MonoBehaviour
     public void DebuffDamage()
     {
         if (debuffDamage == 0)
-        {
             debuffDamage = 10f;
-        }
         else
-        {
             debuffDamage += 5f;
-        }
     }
+
     public void SetMaxHealth(float newMaxHealth)
     {
         maxHealth = newMaxHealth;
         health = maxHealth;
     }
 
-    private Dictionary<string, Coroutine> activeDots = new Dictionary<string, Coroutine>();
-
     public void damageOverTime(float damage, float duration, float interval, string towerID, DamageType damageType)
     {
         if (activeDots.ContainsKey(towerID))
             StopCoroutine(activeDots[towerID]);
 
-        Coroutine newDot = StartCoroutine(DamageOverTimeCoroutine(damage, duration, interval, towerID,damageType));
+        Coroutine newDot = StartCoroutine(DamageOverTimeCoroutine(damage, duration, interval, towerID, damageType));
         activeDots[towerID] = newDot;
     }
 
-    private System.Collections.IEnumerator DamageOverTimeCoroutine(float damage, float duration, float interval,string towerID,DamageType damageType)
+    private System.Collections.IEnumerator DamageOverTimeCoroutine(float damage, float duration, float interval, string towerID, DamageType damageType)
     {
         float elapsed = 0f;
         while (elapsed < duration)
@@ -229,7 +297,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-public void getKnockBacked (float knockBackDistance, Vector3 knockBackDirection)
+    public void getKnockBacked(float knockBackDistance, Vector3 knockBackDirection)
     {
         transform.position += knockBackDirection * knockBackDistance;
     }
@@ -243,5 +311,4 @@ public void getKnockBacked (float knockBackDistance, Vector3 knockBackDirection)
             health = maxHealth;
         }
     }
-
 }
