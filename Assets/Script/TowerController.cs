@@ -257,6 +257,36 @@ public class TowerController : MonoBehaviour
 
     void HandleAuraTowerLogic()
     {
+        // --- NOUVEAU : ThorPillar en tour à aura ---
+        if (towerID == "ThorPillar")
+        {
+            // La tour inflige périodiquement des dégâts et stun les ennemis
+            if (cooldownTime <= 0f)
+            {
+                Collider[] hitEnemies = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
+                foreach (Collider enemy in hitEnemies)
+                {
+                    if (enemy.CompareTag(enemyTag))
+                    {
+                        EnemyController enemyHealth = enemy.GetComponent<EnemyController>();
+                        if (enemyHealth != null)
+                        {
+                            enemyHealth.TakeDamage(attackDamage, dmgType);
+
+                            // --- Carte 4 : Stun augmenté ---
+                            float stunTime = 0.75f;
+                            if (DrawingcardController.card4) stunTime += 0.75f;
+                            enemyHealth.GetStunned(stunTime);
+                        }
+                    }
+                }
+
+                cooldownTime = attackCooldown; // Reset du timer
+            }
+            return; // On sort ici, pas besoin d'appliquer les autres auras
+        }
+
+        // --- LOGIQUE STANDARD DES AURAS ---
         if (towerID != "OdinEye" && towerID != "BaldrObelisk")
         {
             Collider[] hitEnemies = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
@@ -318,6 +348,7 @@ public class TowerController : MonoBehaviour
             }
         }
     }
+
 
     // Appelé si la Carte 3 est dropée sur cette tour
     public void BuffFoudre()

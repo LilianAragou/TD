@@ -110,32 +110,29 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
-  cooldownTime: 0
-  target: {fileID: 0}
   enemyTag: Enemy
   dmgType: 0
   towerID: SkadiAutel
   firePoint: {fileID: 7939094003123343858}
   projectilePrefab: {fileID: 4838475263919451661, guid: 2e86dd08ebf88f84d81d9db4ee76720f, type: 3}
   rangeaura: {fileID: 6941018962113407057}
+  auraProjectilePrefab: {fileID: 0}
   hasAFirstAttack: 0
   isAuraTower: 1
   isProjectileTower: 0
   hasProjectileAura: 0
+  canAim: 0
+  hasPanickShot: 0
   rotationSpeed: 5
   projectileCount: 1
-  auraProjectilePrefab: {fileID: 0}
-  firstShotCD: 0
   numberOfTargets: 1
-  hasPanickShot: 0
-  isBuffedByOdinEye: 0
-  canAim: 0
+  firstShotCD: 0
+  cooldownTime: 0
   stockedDamage: 0
+  target: {fileID: 0}
+  isBuffedByOdinEye: 0
   foudrebuffed: 0
-  foudrebuffedapplied: 0
   orageActive: 0
-  orageDamage: 0
-  orageTimer: 0
   orageTickRate: 0.1
 --- !u!65 &3427567562065497935
 BoxCollider:

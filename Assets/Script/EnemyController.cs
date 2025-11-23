@@ -7,10 +7,9 @@ using System.Collections.Generic;
 public class EnemyController : MonoBehaviour
 {
     [Header("Stats de base")]
-    public float baseHealth = 100f;
     public float speed = 1f;
 
-    [HideInInspector] public float health;
+    public float health;
     [HideInInspector] public GameManager gameManager;
 
     [Header("Stats")]
@@ -50,6 +49,7 @@ public class EnemyController : MonoBehaviour
     private float lastStunEndTime = -10f; 
     private float savedSpeedBeforeStun = -1f; // -1 signifie "pas sauvegardé"
     private Coroutine currentStunRoutine;
+    public bool isStunned = false;
 
     [System.Serializable]
     public class SlowEffect
@@ -95,15 +95,21 @@ public class EnemyController : MonoBehaviour
                 activeSlows.RemoveAt(i);
                 continue;
             }
-            currentSpeed *= (1f - activeSlows[i].amount / 100f);
+            currentSpeed *= 1f - activeSlows[i].amount / 100f;
+            if (currentSpeed < speed * 0.1f)
+                currentSpeed = speed * 0.1f; // Limite de ralentissement à 90%
         }
 
         secretSpeed = currentSpeed;
+        if (isStunned)
+        {
+            secretSpeed = 0f;
+        }
 
         // Mécanique Skadi (3 coups = stun)
         if (SkadiShotCalculator >= 3f) // >= par sécurité
         {
-            getStunned(0.75f);
+            GetStunned(0.75f);
             SkadiShotCalculator = 0f;
         }
 
@@ -130,42 +136,54 @@ public class EnemyController : MonoBehaviour
     }
 
     public void TakeDamage(float damage, DamageType type)
+{
+    if (DrawingcardController.card5 && type == DamageType.Foudre)
     {
-        if (DrawingcardController.card5 && type == DamageType.Foudre)
-        {
-            damage *= 1.15f;
-        }
-        if (type == DamageType.Feu && isPorteur)
-        {
-            speed *= 1.5f;
-            isPorteur = false;
-        }
-        if (type == DamageType.Foudre && isFoudroye)
-        {
-            health += maxHealth * 0.5f;
-            if (health > maxHealth) health = maxHealth;
-        }
-        if (isBerserk)
-        {
-            var reduction = berserkDamage / 100f;
-            // Attention boucle potentiellement lourde si berserkDamage est grand
-            for (int i = 0; i < reduction; i += 1)
-            {
-                damage *= 0.90f;
-            }
-        }
-        
-        if (resistances.Contains(type))
-            damage *= 0.5f; 
-        else if (faiblesses.Contains(type))
-            damage *= 1.25f;
-
-        health -= damage;
-        berserkDamage += damage;
-        
-        if (health <= 0f)
-            Die();
+        damage *= 1.15f;
     }
+    if (type == DamageType.Feu && isPorteur)
+    {
+        speed *= 1.5f;
+        isPorteur = false;
+    }
+    if (type == DamageType.Foudre && isFoudroye)
+    {
+        health += maxHealth * 0.5f;
+        if (health > maxHealth) health = maxHealth;
+    }
+    if (isBerserk)
+    {
+        var reduction = berserkDamage / 100f;
+        for (int i = 0; i < reduction; i += 1)
+        {
+            damage *= 0.90f;
+        }
+    }
+
+    if (resistances.Contains(type))
+        damage *= 0.5f;
+    else if (faiblesses.Contains(type))
+        damage *= 1.25f;
+
+    health -= damage;
+    berserkDamage += damage;
+
+    if (health <= 0f)
+    {
+        Die();
+        return;
+    }
+
+    // --- 30% de chances de réappliquer les dégâts ---
+    if (type == DamageType.Foudre && DrawingcardController.card7)
+    {
+        if (Random.value < 0.5f)
+        {
+            TakeDamage(damage * 0.5f, type);
+        }
+    }
+}
+
 
     private void Die()
     {
@@ -176,59 +194,61 @@ public class EnemyController : MonoBehaviour
     }
 
     // --- SYSTÈME DE STUN (Diminishing Returns) ---
-    public void getStunned(float duration)
+    public void GetStunned(float duration)
     {
-        // 1. Vérifier si on doit RESET la résistance (Si le dernier stun est fini depuis assez longtemps)
-        // On utilise Time.time > lastStunEndTime + stunResetTime
+        // 1. Vérifier si on doit RESET la résistance
         if (Time.time > lastStunEndTime + stunResetTime)
         {
             currentStunMultiplier = 1f; // Reset complet
         }
 
-        // 2. Calculer la durée réelle
+        // 2. Calculer la durée effective
         float effectiveDuration = duration * currentStunMultiplier;
-
-        // Cap minimal pour que le stun serve quand même à quelque chose (ex: interruption)
         if (effectiveDuration < minStunDuration) effectiveDuration = minStunDuration;
-
-        // 3. Appliquer la réduction pour le PROCHAIN stun
-        currentStunMultiplier *= stunDecay;
-
-        // 4. Lancer la coroutine
-        // Si on est déjà stun, on arrête l'ancien timer et on lance le nouveau (Refresh)
-        if (currentStunRoutine != null) StopCoroutine(currentStunRoutine);
-        currentStunRoutine = StartCoroutine(StunCoroutine(effectiveDuration));
+        float effectiveDurationCopy = effectiveDuration;
+        // 3. Réduction pour le prochain stun
+        while (effectiveDurationCopy > 1.0f)
+        {
+            currentStunMultiplier *= stunDecay;
+            effectiveDurationCopy -= 1.0f;
+        }
         
+
+        // 4. Si déjà stun → on ajoute le temps restant
+        if (isStunned)
+        {
+            // Prolonge la fin du stun actuelle
+            if (lastStunEndTime < Time.time)
+                lastStunEndTime = Time.time + effectiveDuration;
+        }
+        else
+        {
+            // Nouveau stun
+            lastStunEndTime = Time.time + effectiveDuration;
+            if (currentStunRoutine != null) StopCoroutine(currentStunRoutine);
+            currentStunRoutine = StartCoroutine(StunCoroutine());
+        }
+
         // Debug optionnel
         // Debug.Log($"Stun appliqué : {effectiveDuration}s (Prochain facteur : {currentStunMultiplier})");
     }
 
-    private System.Collections.IEnumerator StunCoroutine(float duration)
+    private System.Collections.IEnumerator StunCoroutine()
     {
-        // SAUVEGARDE SÉCURISÉE :
-        // Si savedSpeedBeforeStun est à -1, c'est qu'on n'est pas encore stun. On sauvegarde la vitesse actuelle.
-        // Si elle est différente de -1, c'est qu'on est DÉJÀ stun (vitesse 0), donc on ne touche pas à la sauvegarde originale.
-        if (savedSpeedBeforeStun == -1f)
+        isStunned = true;
+
+        // Tant que le stun n’est pas fini
+        while (Time.time < lastStunEndTime)
         {
-            savedSpeedBeforeStun = speed;
-            speed = 0f;
+            yield return null; // Attente frame par frame
         }
 
-        // On définit l'heure de fin pour le calcul du Reset
-        lastStunEndTime = Time.time + duration;
+        // Fin du stun
+        isStunned = false;
 
-        yield return new WaitForSeconds(duration);
-
-        // FIN DU STUN
-        // On rétablit la vitesse d'origine
-        if (savedSpeedBeforeStun != -1f)
-        {
-            speed = savedSpeedBeforeStun;
-            savedSpeedBeforeStun = -1f; // On reset le flag pour dire "je ne suis plus stun"
-        }
-        
         currentStunRoutine = null;
     }
+
     // ---------------------------------------------
 
     public void getSlowed(float slowAmount, float duration, string towerID)
@@ -242,7 +262,7 @@ public class EnemyController : MonoBehaviour
 
     public void SetHealth(float newHealth)
     {
-        baseHealth = newHealth;
+        maxHealth = newHealth;
         health = newHealth;
     }
 

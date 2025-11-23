@@ -168,7 +168,7 @@ public class PojectileController : MonoBehaviour
                             float stunTime = 0.75f;
                             if (DrawingcardController.card4) stunTime += 0.75f; // Total 1.5s
 
-                            areaEnemy.getStunned(stunTime);
+                            areaEnemy.GetStunned(stunTime);
                         }
                     }
                 }
