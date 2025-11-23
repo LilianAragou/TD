@@ -110,29 +110,32 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
+  cooldownTime: 0
+  target: {fileID: 0}
   enemyTag: Enemy
-  dmgType: 3
+  dmgType: 0
   towerID: TwinWind
   firePoint: {fileID: 3086710839583468780}
   projectilePrefab: {fileID: 4838475263919451661, guid: 2e86dd08ebf88f84d81d9db4ee76720f, type: 3}
   rangeaura: {fileID: 6994423307193276135}
-  auraProjectilePrefab: {fileID: 285739597273408606, guid: 4863d3732c4ec164c8941ed9bf37d7d6, type: 3}
   hasAFirstAttack: 0
   isAuraTower: 0
   isProjectileTower: 0
   hasProjectileAura: 1
-  canAim: 0
-  hasPanickShot: 0
   rotationSpeed: 5
   projectileCount: 2
-  numberOfTargets: 1
+  auraProjectilePrefab: {fileID: 285739597273408606, guid: 4863d3732c4ec164c8941ed9bf37d7d6, type: 3}
   firstShotCD: 0
-  cooldownTime: 0
-  stockedDamage: 0
-  target: {fileID: 0}
+  numberOfTargets: 1
+  hasPanickShot: 0
   isBuffedByOdinEye: 0
+  canAim: 0
+  stockedDamage: 0
   foudrebuffed: 0
+  foudrebuffedapplied: 0
   orageActive: 0
+  orageDamage: 0
+  orageTimer: 0
   orageTickRate: 0.1
 --- !u!65 &7975650980913081005
 BoxCollider:
