@@ -257,7 +257,7 @@ public class TowerController : MonoBehaviour
 
     void HandleAuraTowerLogic()
     {
-         // --- NOUVEAU : ThorPillar en tour à aura ---
+        // --- NOUVEAU : ThorPillar en tour à aura ---
         if (towerID == "ThorPillar")
         {
             // La tour inflige périodiquement des dégâts et stun les ennemis
@@ -285,6 +285,8 @@ public class TowerController : MonoBehaviour
             }
             return; // On sort ici, pas besoin d'appliquer les autres auras
         }
+
+        // --- LOGIQUE STANDARD DES AURAS ---
         if (towerID != "OdinEye" && towerID != "BaldrObelisk")
         {
             Collider[] hitEnemies = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
@@ -346,6 +348,7 @@ public class TowerController : MonoBehaviour
             }
         }
     }
+
 
     // Appelé si la Carte 3 est dropée sur cette tour
     public void BuffFoudre()
@@ -492,7 +495,7 @@ public class TowerController : MonoBehaviour
     {
         if (rangeaura)
         {
-            UpdateRangeVisual();
+            rangeaura.transform.localScale = new Vector3(attackRange * 2, 0.1f, attackRange * 2);
             rangeaura.SetActive(true);
         }
     }
@@ -500,22 +503,5 @@ public class TowerController : MonoBehaviour
     void OnMouseExit()
     {
         if (rangeaura) rangeaura.SetActive(false);
-    }
-
-    // Nouvelle fonction utilitaire pour recalculer la taille proprement
-    public void UpdateRangeVisual()
-    {
-        if (rangeaura == null) return;
-
-        // Formule expliquée :
-        // attackRange = Rayon (Radius)
-        // Scale d'une primitive Unity (Sphere/Cylindre) = Diamètre
-        // Diamètre = Rayon * 2
-        // Si ton objet est encore 2x trop petit à cause de son mesh de base ou du parent -> on remultiplie par 2 via le multiplier.
-        
-        float finalSize = attackRange * 2f * 3.5f;
-        
-        // On applique la taille en X et Z (le sol), et on garde Y plat (0.1f ou moins)
-        rangeaura.transform.localScale = new Vector3(finalSize, 0.1f, finalSize);
     }
 }

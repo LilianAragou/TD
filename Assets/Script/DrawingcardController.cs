@@ -29,6 +29,7 @@ public class DrawingcardController : MonoBehaviour
     public static bool card3Used = false;
     public static bool card4 = false;
     public static bool card5 = false;
+    public static bool card7 = false;
 
     void Start()
     {
