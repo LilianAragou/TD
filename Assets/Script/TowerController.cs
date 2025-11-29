@@ -495,7 +495,7 @@ public class TowerController : MonoBehaviour
     {
         if (rangeaura)
         {
-            rangeaura.transform.localScale = new Vector3(attackRange * 2, 0.1f, attackRange * 2);
+            UpdateRangeVisual();
             rangeaura.SetActive(true);
         }
     }
@@ -503,5 +503,22 @@ public class TowerController : MonoBehaviour
     void OnMouseExit()
     {
         if (rangeaura) rangeaura.SetActive(false);
+    }
+
+    // Nouvelle fonction utilitaire pour recalculer la taille proprement
+    public void UpdateRangeVisual()
+    {
+        if (rangeaura == null) return;
+
+        // Formule expliquée :
+        // attackRange = Rayon (Radius)
+        // Scale d'une primitive Unity (Sphere/Cylindre) = Diamètre
+        // Diamètre = Rayon * 2
+        // Si ton objet est encore 2x trop petit à cause de son mesh de base ou du parent -> on remultiplie par 2 via le multiplier.
+        
+        float finalSize = attackRange * 2f * 3.5f;
+        
+        // On applique la taille en X et Z (le sol), et on garde Y plat (0.1f ou moins)
+        rangeaura.transform.localScale = new Vector3(finalSize, 0.1f, finalSize);
     }
 }
