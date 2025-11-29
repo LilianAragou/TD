@@ -235,8 +235,8 @@ MonoBehaviour:
   rangeaura: {fileID: 228682330233169934}
   auraProjectilePrefab: {fileID: 0}
   hasAFirstAttack: 0
-  isAuraTower: 0
-  isProjectileTower: 1
+  isAuraTower: 1
+  isProjectileTower: 0
   hasProjectileAura: 0
   canAim: 0
   hasPanickShot: 0
