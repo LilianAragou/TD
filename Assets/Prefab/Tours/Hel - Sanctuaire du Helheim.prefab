@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &5696118819182200061
+--- !u!1 &3849780484049246513
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,8 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3784823968676564268}
-  - component: {fileID: 1481689469041232123}
+  - component: {fileID: 7782517171156493214}
+  - component: {fileID: 7624476817932987484}
+  - component: {fileID: 8038013855080986815}
   m_Layer: 0
   m_Name: la range
   m_TagString: Untagged
@@ -17,37 +18,37 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3784823968676564268
+--- !u!4 &7782517171156493214
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5696118819182200061}
+  m_GameObject: {fileID: 3849780484049246513}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_LocalScale: {x: 3.5714283, y: 2.4999995, z: 3.5714278}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5301562728907673586}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &1481689469041232123
-SpriteRenderer:
+--- !u!23 &7624476817932987484
+MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5696118819182200061}
+  m_GameObject: {fileID: 3849780484049246513}
   m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
+  m_RayTracingMode: 2
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
@@ -55,7 +56,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 49af6a2bf0fa505449068ccc4cbe4fa8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -68,25 +69,23 @@ SpriteRenderer:
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
   m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
+  m_SelectedEditorRenderState: 3
   m_MinimumChartSize: 4
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 10
-  m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
-  m_Color: {r: 0.127759, g: 0.7486104, b: 0.8207547, a: 0.15686275}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
-  m_SpriteSortPoint: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &8038013855080986815
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3849780484049246513}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &5845547429976486263
 GameObject:
   m_ObjectHideFlags: 0
@@ -147,11 +146,11 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -75.57, y: -34.62, z: 0}
-  m_LocalScale: {x: 0.7, y: 0.7, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 7782517171156493214}
   - {fileID: 1223693133398475551}
-  - {fileID: 3784823968676564268}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!212 &8641608396217727300
@@ -228,32 +227,29 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
-  cooldownTime: 0
-  target: {fileID: 0}
   enemyTag: Enemy
-  dmgType: 0
+  dmgType: 4
   towerID: HelheimSanctuary
   firePoint: {fileID: 1223693133398475551}
   projectilePrefab: {fileID: 4838475263919451661, guid: 2e86dd08ebf88f84d81d9db4ee76720f, type: 3}
-  rangeaura: {fileID: 5696118819182200061}
+  rangeaura: {fileID: 3849780484049246513}
+  auraProjectilePrefab: {fileID: 0}
   hasAFirstAttack: 0
   isAuraTower: 0
   isProjectileTower: 1
   hasProjectileAura: 0
+  canAim: 0
+  hasPanickShot: 0
   rotationSpeed: 5
   projectileCount: 1
-  auraProjectilePrefab: {fileID: 0}
-  firstShotCD: 0
   numberOfTargets: 1
-  hasPanickShot: 0
-  isBuffedByOdinEye: 0
-  canAim: 0
+  firstShotCD: 0
+  cooldownTime: 0
   stockedDamage: 0
+  target: {fileID: 0}
+  isBuffedByOdinEye: 0
   foudrebuffed: 0
-  foudrebuffedapplied: 0
   orageActive: 0
-  orageDamage: 0
-  orageTimer: 0
   orageTickRate: 0.1
 --- !u!65 &3847182584396296573
 BoxCollider:

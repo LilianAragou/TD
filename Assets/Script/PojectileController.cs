@@ -67,12 +67,12 @@ public class PojectileController : MonoBehaviour
                 float x = centerPointForPatrol.position.x + radiusForPatrol * Mathf.Cos(angleForPatrol);
                 float z = centerPointForPatrol.position.z + radiusForPatrol * Mathf.Sin(angleForPatrol);
                 
-                transform.position = new Vector3(x, 1f, z); // Y=1f pour flotter au-dessus du sol
+                transform.position = new Vector3(x, 0, z); // Y=1f pour flotter au-dessus du sol
                 
                 // Rotation tangentielle (pour faire joli)
                 Vector3 nextPos = new Vector3(
                     centerPointForPatrol.position.x + radiusForPatrol * Mathf.Cos(angleForPatrol + 0.1f),
-                    1f,
+                    0,
                     centerPointForPatrol.position.z + radiusForPatrol * Mathf.Sin(angleForPatrol + 0.1f)
                 );
                 transform.LookAt(nextPos);
@@ -168,7 +168,7 @@ public class PojectileController : MonoBehaviour
                             float stunTime = 0.75f;
                             if (DrawingcardController.card4) stunTime += 0.75f; // Total 1.5s
 
-                            areaEnemy.getStunned(stunTime);
+                            areaEnemy.GetStunned(stunTime);
                         }
                     }
                 }
@@ -234,7 +234,7 @@ public class PojectileController : MonoBehaviour
                 // Recul + Dégâts (sans détruire l'aura)
                 Vector3 pushDir = (hitObject.transform.position - transform.position).normalized;
                 pushDir.y = 0; // Pas de vol plané
-                enemyHealth.getKnockBacked(0.5f, pushDir);
+                enemyHealth.getKnockBacked(1.5f, pushDir);
                 ApplyDamage(enemyHealth, damage);
                 break;
                 
