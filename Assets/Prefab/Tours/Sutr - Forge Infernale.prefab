@@ -104,8 +104,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackRange: 4
-  attackDamage: 20
-  attackCooldown: 0.1
+  attackDamage: 40
+  attackCooldown: 0.2
   projectileSpeed: 5
   enemyLayer:
     serializedVersion: 2
@@ -127,6 +127,9 @@ MonoBehaviour:
   projectileCount: 1
   numberOfTargets: 1
   firstShotCD: 0
+  hasElectriqueCourant: 0
+  electriqueCourantActivated: 0
+  rangeVisualMultiplier: 3.5
   cooldownTime: 0
   stockedDamage: 0
   target: {fileID: 0}
@@ -134,6 +137,11 @@ MonoBehaviour:
   foudrebuffed: 0
   orageActive: 0
   orageTickRate: 0.1
+  hasKillScaling: 0
+  killCount: 0
+  isThorPaired: 0
+  isSurcharged: 0
+  hasDoubleRangeVolca: 0
 --- !u!65 &4463846807996242364
 BoxCollider:
   m_ObjectHideFlags: 0

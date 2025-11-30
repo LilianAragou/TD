@@ -12,9 +12,9 @@ public class TowerController : MonoBehaviour
     [SerializeField] public float projectileSpeed = 10f;
     
     [Header("Configuration")]
-    public LayerMask enemyLayer; // IMPORTANT : Mettre sur "Enemy" dans l'inspecteur
+    public LayerMask enemyLayer; 
     public string enemyTag = "Enemy";
-    public DamageType dmgType; // Assurez-vous que c'est 'Foudre' pour les tours électriques
+    public DamageType dmgType; 
     public string towerID;
     public Transform firePoint;
     
@@ -36,20 +36,25 @@ public class TowerController : MonoBehaviour
     public float projectileCount = 1f;
     public float numberOfTargets = 1f;
     public float firstShotCD;
+    public bool hasElectriqueCourant = false;
+    public bool electriqueCourantActivated = false;
+
+    [Header("Debug Visuel")]
+    [SerializeField] private float rangeVisualMultiplier = 3.5f; 
 
     // État interne
     [HideInInspector] public float cooldownTime = 0f;
-    [HideInInspector] public float stockedDamage = 0f; // Pour Baldr/Stats
+    [HideInInspector] public float stockedDamage = 0f; 
     public Transform target;
     private List<Transform> attackedTargets = new List<Transform>();
     private bool isFirstShot;
-    
+    private TileManager tileManager; // Référence pour la logique de grille (Carte 8)
+
     // --- Variables pour les Cartes & Buffs ---
     public bool isBuffedByOdinEye = false;
     
-    // Carte 3 : Cette tour buff-t-elle les autres ?
+    // Carte 3 : Buff de zone
     private bool foudreBuffer = false; 
-    // Carte 3 : Cette tour est-elle buffée par une autre ?
     public bool foudrebuffed = false; 
 
     // Carte 2 : Orage
@@ -57,14 +62,35 @@ public class TowerController : MonoBehaviour
     public float orageTickRate = 0.1f;
     private Coroutine orageCoroutine;
 
+    // Carte 6 : Scaling
+    [Header("Carte 6 - Scaling")]
+    public bool hasKillScaling = false;
+    public int killCount = 0;
+    private int maxKillsForBonus = 50; 
+
+    // Carte 8 : Synergie
+    [Header("Carte 8 - Synergie")]
+    public bool isThorPaired = false;
+    private float adjacencyCheckTimer = 0f;
+    private float adjacencyCheckInterval = 1.0f; // Vérification toutes les secondes
+    
+    // Carte 11 : Surcharge (AJOUT)
+    [Header("Carte 11 - Surcharge")]
+    public bool isSurcharged = false;
+
     // Aura Projectiles (TwinWind)
     private List<GameObject> auraProjectiles = new List<GameObject>();
     private float[] angles;
-
+    [Header("Carte 12")]
+    public bool hasDoubleRangeVolca = false;
 
     void Start()
     {
         isFirstShot = hasAFirstAttack;
+        
+        // Récupération du TileManager pour la logique de grille
+        tileManager = FindObjectOfType<TileManager>();
+
         if (rangeaura) rangeaura.SetActive(false);
 
         if (hasProjectileAura)
@@ -76,11 +102,35 @@ public class TowerController : MonoBehaviour
         cooldownTime -= Time.deltaTime;
 
         // --- LOGIQUE CARTE 3 (Buff de zone actif) ---
-        // Si on a reçu la carte "Se drop sur une tour...", on applique le buff aux voisins
         if (foudreBuffer)
         {
             ApplyFoudreBufferToNeighbors();
         }
+
+        // --- LOGIQUE CARTE 8 (Check Voisins via Grille) ---
+    
+        adjacencyCheckTimer -= Time.deltaTime;
+        if (adjacencyCheckTimer <= 0f)
+        {
+            if (DrawingcardController.card8 && towerID == "ThorTotem")
+            {
+                CheckThorAdjacency();
+            }
+            if (hasElectriqueCourant)
+            {
+                Collider[] hits = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
+                if (hits.Length >= 10)
+                {
+                    electriqueCourantActivated = true;
+                }
+                else
+                {
+                    electriqueCourantActivated = false;
+                }
+            }
+            adjacencyCheckTimer = adjacencyCheckInterval;
+        }
+        // --------------------------------------------------
 
         // --- LOGIQUE TOURELLE CLASSIQUE (PROJECTILES) ---
         if (isProjectileTower)
@@ -95,10 +145,8 @@ public class TowerController : MonoBehaviour
             }
             else
             {
-                // Vérification 3D de la portée
                 float distanceToTarget = Vector3.Distance(transform.position, target.position);
                 
-                // Si la cible sort de la portée ou meurt (null check implicite unity)
                 if (distanceToTarget > attackRange || target.gameObject == null)
                 {
                     target = null;
@@ -116,13 +164,17 @@ public class TowerController : MonoBehaviour
         {
             HandleAuraTowerLogic();
         }
+        if (DrawingcardController.card12 && !hasDoubleRangeVolca && towerID == "VolcanoTower")
+        {
+            attackRange *= 2;
+            hasDoubleRangeVolca = true;
+        }
     }
 
     // --- SYSTÈME DE VISÉE OPTIMISÉ (3D) ---
     
     public void CheckForNearestEnemy()
     {
-        // Optimisation : On cherche uniquement dans la sphère, sur le Layer Enemy
         Collider[] hits = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
         
         Transform best = null;
@@ -130,10 +182,8 @@ public class TowerController : MonoBehaviour
 
         foreach (Collider hit in hits)
         {
-            // Double sécurité tag
             if (!hit.CompareTag(enemyTag)) continue;
 
-            // On vise l'ennemi le plus proche du Nexus (0,0,0)
             float distToNexus = Vector3.Distance(Vector3.zero, hit.transform.position);
             
             if (distToNexus < bestDistToNexus)
@@ -161,7 +211,6 @@ public class TowerController : MonoBehaviour
         {
             Transform t = hit.transform;
             
-            // On évite de viser deux fois la même cible dans une salve multiple
             if (attackedTargets.Contains(t)) continue;
             if (!t.CompareTag(enemyTag)) continue;
 
@@ -197,7 +246,6 @@ public class TowerController : MonoBehaviour
 
                 FireProjectile(target);
 
-                // Tirs multiples (Multishot)
                 for (int i = 1; i < numberOfTargets; i++)
                 {
                     getNewTarget();
@@ -210,7 +258,6 @@ public class TowerController : MonoBehaviour
                         panickShot();
                     }
                 }
-                // Reset target principal pour la frame suivante
                 target = attackedTargets.Count > 0 ? attackedTargets[0] : null; 
             }
             else
@@ -225,7 +272,7 @@ public class TowerController : MonoBehaviour
         if (projectilePrefab == null) return;
 
         GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-        PojectileController pc = bullet.GetComponent<PojectileController>(); // Attention à la typo "Pojectile"
+        PojectileController pc = bullet.GetComponent<PojectileController>(); 
         
         if (pc != null)
         {
@@ -234,8 +281,15 @@ public class TowerController : MonoBehaviour
             pc.mummyTower = this;
             pc.speed = projectileSpeed;
 
-            // --- CALCUL DES DÉGÂTS (CARTES 3 & 5) ---
+            // --- CALCUL DES DÉGÂTS ---
             float finalDamage = attackDamage;
+
+            // --- AJOUT CARTE 11 : SURCHARGE ---
+            if (isSurcharged)
+            {
+                finalDamage *= 11f; // +1000% de dégâts (x11)
+            }
+            // ----------------------------------
 
             // CARTE 5 : +15% sur tous les dégâts de foudre
             if (DrawingcardController.card5 && dmgType == DamageType.Foudre)
@@ -249,6 +303,12 @@ public class TowerController : MonoBehaviour
                 finalDamage *= 1.30f;
             }
 
+            // CARTE 8 : +25% si Synergie Totem active
+            if (isThorPaired && DrawingcardController.card8)
+            {
+                finalDamage *= 1.25f; 
+            }
+
             pc.damage = finalDamage;
         }
     }
@@ -257,10 +317,9 @@ public class TowerController : MonoBehaviour
 
     void HandleAuraTowerLogic()
     {
-        // --- NOUVEAU : ThorPillar en tour à aura ---
+        // --- ThorPillar (Stun de zone) ---
         if (towerID == "ThorPillar")
         {
-            // La tour inflige périodiquement des dégâts et stun les ennemis
             if (cooldownTime <= 0f)
             {
                 Collider[] hitEnemies = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
@@ -271,22 +330,21 @@ public class TowerController : MonoBehaviour
                         EnemyController enemyHealth = enemy.GetComponent<EnemyController>();
                         if (enemyHealth != null)
                         {
-                            enemyHealth.TakeDamage(attackDamage, dmgType);
+                            enemyHealth.TakeDamage(attackDamage, dmgType, this); 
 
-                            // --- Carte 4 : Stun augmenté ---
+                            // Carte 4 : Stun augmenté
                             float stunTime = 0.75f;
                             if (DrawingcardController.card4) stunTime += 0.75f;
                             enemyHealth.GetStunned(stunTime);
                         }
                     }
                 }
-
-                cooldownTime = attackCooldown; // Reset du timer
+                cooldownTime = attackCooldown; 
             }
-            return; // On sort ici, pas besoin d'appliquer les autres auras
+            return; 
         }
 
-        // --- LOGIQUE STANDARD DES AURAS ---
+        // --- Standard Auras ---
         if (towerID != "OdinEye" && towerID != "BaldrObelisk")
         {
             Collider[] hitEnemies = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
@@ -299,9 +357,9 @@ public class TowerController : MonoBehaviour
                 }
             }
         }
+        // --- OdinEye (Buff Alliés) ---
         else if (towerID == "OdinEye")
         {
-            // Odin buff les autres tours
             Collider[] hitAllies = Physics.OverlapSphere(transform.position, attackRange);
             foreach (Collider ally in hitAllies)
             {
@@ -310,16 +368,16 @@ public class TowerController : MonoBehaviour
                     TowerController allyTower = ally.GetComponent<TowerController>();
                     if (allyTower != null && allyTower != this && allyTower.towerID != "OdinEye" && !allyTower.isBuffedByOdinEye)
                     {
-                        allyTower.attackDamage *= 1.2f; // +20%
-                        allyTower.attackCooldown *= 0.8f; // -20%
+                        allyTower.attackDamage *= 1.2f; 
+                        allyTower.attackCooldown *= 0.8f; 
                         allyTower.isBuffedByOdinEye = true;
                     }
                 }
             }
         }
+        // --- BaldrObelisk (Accumulation) ---
         else if (towerID == "BaldrObelisk")
         {
-            // Logique d'accumulation de dégâts
             Collider[] hits = Physics.OverlapSphere(transform.position, attackRange);
             foreach (Collider hit in hits)
             {
@@ -334,14 +392,13 @@ public class TowerController : MonoBehaviour
                 }
             }
             
-            // Explosion stockée
             if (cooldownTime <= 0f && stockedDamage > 0f)
             {
                 Collider[] enemyHits = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
                 foreach (Collider hit in enemyHits)
                 {
                     EnemyController enemy = hit.GetComponent<EnemyController>();
-                    if (enemy != null) enemy.TakeDamage(stockedDamage, dmgType);
+                    if (enemy != null) enemy.TakeDamage(stockedDamage, dmgType, this);
                 }
                 cooldownTime = attackCooldown;
                 stockedDamage = 0f;
@@ -349,44 +406,87 @@ public class TowerController : MonoBehaviour
         }
     }
 
-
-    // Appelé si la Carte 3 est dropée sur cette tour
+    // --- CARTE 3 : Buff Foudre ---
     public void BuffFoudre()
     {
         foudreBuffer = true;
     }
 
-    // CARTE 3 : Logique cyclique pour buffer les voisins
     void ApplyFoudreBufferToNeighbors()
     {
         Collider[] towersInRange = Physics.OverlapSphere(transform.position, attackRange);
         foreach (Collider col in towersInRange)
         {
-            // On ignore soi-même
             if (col.gameObject == this.gameObject) continue;
 
-            // On ne buffe que les TOURS
             if (col.CompareTag("Tour"))
             {
                 TowerController otherTower = col.GetComponent<TowerController>();
-                
-                // Condition : C'est une tour de Foudre, et elle n'est pas encore buffée
                 if (otherTower != null && !otherTower.foudrebuffed && otherTower.dmgType == DamageType.Foudre)
                 {
                     otherTower.foudrebuffed = true;
-                    // Ici on pourrait ajouter un petit effet visuel (particules)
                 }
             }
         }
     }
+    
+    // --- CARTE 8 : Vérification Adjacence (Optimisée Grille) ---
+    void CheckThorAdjacency()
+    {
+        if (tileManager == null) return;
+
+        // 1. Trouver sur quelle tuile est posée cette tour
+        Tile myTile = GetComponentInParent<Tile>();
+        if (myTile == null) return; 
+
+        int myX = myTile.x;
+        int myY = myTile.y;
+        bool foundNeighbor = false;
+
+        // 2. Vérifier les 8 voisins (Diagonales incluses)
+        for (int xOffset = -1; xOffset <= 1; xOffset++)
+        {
+            for (int yOffset = -1; yOffset <= 1; yOffset++)
+            {
+                if (xOffset == 0 && yOffset == 0) continue; // On saute soi-même
+
+                int checkX = myX + xOffset;
+                int checkY = myY + yOffset;
+
+                // Limites de la grille
+                if (checkX >= 0 && checkX < tileManager.gridSize &&
+                    checkY >= 0 && checkY < tileManager.gridSize)
+                {
+                    GameObject neighborTileObj = tileManager.tiles[checkX, checkY];
+                    
+                    if (neighborTileObj != null)
+                    {
+                        Tile neighborTile = neighborTileObj.GetComponent<Tile>();
+                        // Si la tuile a un occupant (une tour)
+                        if (neighborTile != null && neighborTile.HasOccupant)
+                        {
+                            TowerController neighborTower = neighborTileObj.GetComponentInChildren<TowerController>();
+                            
+                            if (neighborTower != null && neighborTower.towerID == "ThorTotem")
+                            {
+                                foundNeighbor = true;
+                                break; 
+                            }
+                        }
+                    }
+                }
+            }
+            if (foundNeighbor) break;
+        }
+
+        isThorPaired = foundNeighbor;
+    }
+    // -----------------------------------------------------------
 
     // CARTE 2 : Déclenchement de l'Orage
     public void Orage(float damage, float duration)
     {
-        if (orageCoroutine != null)
-        {
-            StopCoroutine(orageCoroutine);
-        }
+        if (orageCoroutine != null) StopCoroutine(orageCoroutine);
         orageCoroutine = StartCoroutine(OrageCoroutine(damage, duration));
     }
 
@@ -394,15 +494,11 @@ public class TowerController : MonoBehaviour
     {
         orageActive = true;
         float elapsed = 0f;
-        
-        // Buffer pour éviter l'allocation mémoire à chaque frame
         Collider[] buffer = new Collider[50]; 
 
         while (elapsed < duration)
         {
-            // Dégâts de zone périodiques (3D)
             int hitCount = Physics.OverlapSphereNonAlloc(transform.position, attackRange, buffer, enemyLayer);
-            
             for (int i = 0; i < hitCount; i++)
             {
                 Collider enemy = buffer[i];
@@ -411,12 +507,11 @@ public class TowerController : MonoBehaviour
                     EnemyController enemyHealth = enemy.GetComponent<EnemyController>();
                     if (enemyHealth != null)
                     {
-                        enemyHealth.TakeDamage(damage, DamageType.Foudre);
+                        enemyHealth.TakeDamage(damage, DamageType.Foudre, this);
                         stockedDamage += damage * (1 + enemyHealth.debuffDamage / 100f);
                     }
                 }
             }
-
             elapsed += orageTickRate;
             yield return new WaitForSeconds(orageTickRate);
         }
@@ -425,15 +520,51 @@ public class TowerController : MonoBehaviour
         orageCoroutine = null;
     }
 
+    // CARTE 6 : Kill Scaling
+    public void ActivateKillScaling()
+    {
+        hasKillScaling = true;
+        Debug.Log($"Carte 6 activée sur {towerID} : Les kills augmentent la vitesse !");
+    }
+
+    public void RegisterKill()
+    {
+        if (!hasKillScaling) return;
+
+        if (killCount < maxKillsForBonus)
+        {
+            killCount++;
+            attackCooldown = attackCooldown / 1.01f;
+        }
+    }
+    
+    // --- CARTE 11 : SURCHARGE (AJOUT) ---
+    public void ActivateSurcharge(float duration)
+    {
+        // Si déjà activé, on reset (ou relance)
+        if (isSurcharged) StopCoroutine("SurchargeRoutine");
+        StartCoroutine(SurchargeRoutine(duration));
+    }
+
+    private IEnumerator SurchargeRoutine(float duration)
+    {
+        isSurcharged = true;
+        // Optionnel : Ajouter ici un changement de couleur temporaire
+        
+        yield return new WaitForSeconds(duration);
+        
+        isSurcharged = false;
+        // Optionnel : Revert de la couleur
+    }
+    // ------------------------------------
+
     void panickShot()
     {
-        // Tir au hasard autour de la tour
         Vector2 rand = Random.insideUnitCircle * attackRange;
         Vector3 randomPoint = transform.position + new Vector3(rand.x, 0f, rand.y);
 
         GameObject tempTarget = new GameObject("TempTarget");
         tempTarget.transform.position = randomPoint;
-        // Important pour que le projectile guidé ne plante pas, on simule un ennemi
         tempTarget.tag = enemyTag; 
         
         GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
@@ -449,7 +580,7 @@ public class TowerController : MonoBehaviour
             pc.mummyTower = this;
         }
         
-        Destroy(tempTarget, 2f); // Nettoyage de la cible temporaire
+        Destroy(tempTarget, 2f); 
     }
 
     void InitProjectileAura()
@@ -461,7 +592,7 @@ public class TowerController : MonoBehaviour
             Vector3 spawnPos = transform.position + new Vector3(Mathf.Cos(angles[i]), 0f, Mathf.Sin(angles[i])) * attackRange;
             
             GameObject proj = Instantiate(auraProjectilePrefab, spawnPos, Quaternion.identity);
-            proj.tag = towerID; // Tag utilisé pour identifier l'effet dans le projectile controller
+            proj.tag = towerID; 
             
             PojectileController pc = proj.GetComponent<PojectileController>();
             if (pc != null)
@@ -505,20 +636,10 @@ public class TowerController : MonoBehaviour
         if (rangeaura) rangeaura.SetActive(false);
     }
 
-    // Nouvelle fonction utilitaire pour recalculer la taille proprement
     public void UpdateRangeVisual()
     {
         if (rangeaura == null) return;
-
-        // Formule expliquée :
-        // attackRange = Rayon (Radius)
-        // Scale d'une primitive Unity (Sphere/Cylindre) = Diamètre
-        // Diamètre = Rayon * 2
-        // Si ton objet est encore 2x trop petit à cause de son mesh de base ou du parent -> on remultiplie par 2 via le multiplier.
-        
-        float finalSize = attackRange * 2f * 3.5f;
-        
-        // On applique la taille en X et Z (le sol), et on garde Y plat (0.1f ou moins)
+        float finalSize = attackRange * 2f * rangeVisualMultiplier;
         rangeaura.transform.localScale = new Vector3(finalSize, 0.1f, finalSize);
     }
 }

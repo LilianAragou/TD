@@ -1,8 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-
- public enum DamageType { Feu, Snow, Terre, Air, Necrotique, Foudre, Base }
+public enum DamageType { Feu, Snow, Terre, Air, Necrotique, Foudre, Base }
 
 public class EnemyController : MonoBehaviour
 {
@@ -36,6 +35,11 @@ public class EnemyController : MonoBehaviour
     public float chefRange = 1.5f;
     public float clercRange = 1.5f;
     
+    // --- AJOUT CARTE 10 (Unique) ---
+    [Header("Card 10 - Unique")]
+    public bool isLightningMarked = false; // Cible prioritaire (+300% Foudre)
+    // -------------------------------
+
     public float traveled = 0f;
     private float berserkDamage = 0f;
 
@@ -135,60 +139,84 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    public void TakeDamage(float damage, DamageType type)
-{
-    if (DrawingcardController.card5 && type == DamageType.Foudre)
+    public void TakeDamage(float damage, DamageType type, TowerController attacker = null)
     {
-        damage *= 1.15f;
-    }
-    if (type == DamageType.Feu && isPorteur)
-    {
-        speed *= 1.5f;
-        isPorteur = false;
-    }
-    if (type == DamageType.Foudre && isFoudroye)
-    {
-        health += maxHealth * 0.5f;
-        if (health > maxHealth) health = maxHealth;
-    }
-    if (isBerserk)
-    {
-        var reduction = berserkDamage / 100f;
-        for (int i = 0; i < reduction; i += 1)
+        // Carte 5
+        if (DrawingcardController.card5 && type == DamageType.Foudre)
         {
-            damage *= 0.90f;
+            damage *= 1.15f;
+        }
+
+        // --- AJOUT CARTE 10 : Vulnérabilité Extrême ---
+        // Si marqué ET dégâts de foudre = Dégâts x4 (+300%)
+        if (isLightningMarked && type == DamageType.Foudre)
+        {
+            damage *= 4.0f; 
+        }
+        // ----------------------------------------------
+
+        if (type == DamageType.Feu && isPorteur)
+        {
+            speed *= 1.5f;
+            isPorteur = false;
+        }
+        if (type == DamageType.Foudre && isFoudroye)
+        {
+            health += maxHealth * 0.5f;
+            if (health > maxHealth) health = maxHealth;
+        }
+        if (isBerserk)
+        {
+            var reduction = berserkDamage / 100f;
+            for (int i = 0; i < reduction; i += 1)
+            {
+                damage *= 0.90f;
+            }
+        }
+
+        if (resistances.Contains(type))
+            damage *= 0.5f;
+        else if (faiblesses.Contains(type))
+            damage *= 1.25f;
+
+        health -= damage;
+        berserkDamage += damage;
+
+        if (health <= 0f)
+        {
+            // Carte 6 : Kill Scaling
+            if (attacker != null)
+            {
+                attacker.RegisterKill();
+            }
+
+            Die();
+            return;
+        }
+
+        // Carte 7 : 30% de chances de réappliquer
+        if (type == DamageType.Foudre && DrawingcardController.card7)
+        {
+            if (Random.value < 0.5f)
+            {
+                TakeDamage(damage * 0.5f, type, attacker);
+            }
         }
     }
 
-    if (resistances.Contains(type))
-        damage *= 0.5f;
-    else if (faiblesses.Contains(type))
-        damage *= 1.25f;
-
-    health -= damage;
-    berserkDamage += damage;
-
-    if (health <= 0f)
+    // --- CARTE 10 : Fonction d'application de la marque ---
+    public void ApplyLightningMark()
     {
-        Die();
-        return;
+        isLightningMarked = true;
+        // Effet visuel optionnel (Feedback pour le joueur)
+        Debug.Log($"{gameObject.name} est marqué pour la mort ! (+300% Foudre)");
     }
-
-    // --- 30% de chances de réappliquer les dégâts ---
-    if (type == DamageType.Foudre && DrawingcardController.card7)
-    {
-        if (Random.value < 0.5f)
-        {
-            TakeDamage(damage * 0.5f, type);
-        }
-    }
-}
-
+    // -----------------------------------------------------
 
     private void Die()
     {
         if (gameManager != null)
-            gameManager.money += 10; // Valeur en dur, à changer par 'reward' si voulu
+            gameManager.money += 10; 
 
         Destroy(gameObject);
     }
@@ -213,7 +241,6 @@ public class EnemyController : MonoBehaviour
             effectiveDurationCopy -= 1.0f;
         }
         
-
         // 4. Si déjà stun → on ajoute le temps restant
         if (isStunned)
         {
@@ -228,9 +255,6 @@ public class EnemyController : MonoBehaviour
             if (currentStunRoutine != null) StopCoroutine(currentStunRoutine);
             currentStunRoutine = StartCoroutine(StunCoroutine());
         }
-
-        // Debug optionnel
-        // Debug.Log($"Stun appliqué : {effectiveDuration}s (Prochain facteur : {currentStunMultiplier})");
     }
 
     private System.Collections.IEnumerator StunCoroutine()
@@ -248,8 +272,6 @@ public class EnemyController : MonoBehaviour
 
         currentStunRoutine = null;
     }
-
-    // ---------------------------------------------
 
     public void getSlowed(float slowAmount, float duration, string towerID)
     {
@@ -311,7 +333,8 @@ public class EnemyController : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
-            TakeDamage(damage, damageType);
+            // Note : Ici on passe null pour l'attacker car DOT ne stocke pas la référence TowerController
+            TakeDamage(damage, damageType, null); 
             yield return new WaitForSeconds(interval);
             elapsed += interval;
         }

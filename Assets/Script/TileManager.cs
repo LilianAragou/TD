@@ -13,7 +13,7 @@ public class TileManager : MonoBehaviour
     [Header("Layers & Tags")]
     public string tileLayerName = "Tile"; // IMPORTANT : Créer ce Layer dans Unity
 
-    // Accesseur public pour d'autres scripts
+    // Accesseur public pour d'autres scripts (TowerController s'en servira)
     public GameObject[,] tiles { get; private set; }
 
     void Start()
@@ -51,24 +51,33 @@ public class TileManager : MonoBehaviour
                 Vector3 pos = new Vector3((x - offset) * tileSpacing, 0f, (y - offset) * tileSpacing);
                 
                 // Instantiation
-                GameObject tile = Instantiate(tilePrefab, pos, tilePrefab.transform.rotation, transform);
-                tile.name = $"Tile_{x}_{y}";
-                tile.layer = tileLayer;
+                GameObject tileObj = Instantiate(tilePrefab, pos, tilePrefab.transform.rotation, transform);
+                tileObj.name = $"Tile_{x}_{y}";
+                tileObj.layer = tileLayer;
 
                 // --- SÉCURITÉ COLLIDER ---
                 // On ne rajoute un BoxCollider que si le prefab n'en a pas déjà un (MeshCollider, etc.)
-                Collider col = tile.GetComponent<Collider>();
+                Collider col = tileObj.GetComponent<Collider>();
                 if (col == null) 
                 {
-                    col = tile.AddComponent<BoxCollider>();
+                    col = tileObj.AddComponent<BoxCollider>();
                 }
                 // Important pour le Raycast de placement de tour : ce n'est PAS un trigger
                 col.isTrigger = false; 
 
-                // Ajout du script logique Tile s'il manque
-                if (!tile.GetComponent<Tile>()) tile.AddComponent<Tile>();
+                // --- MODIFICATION : Assignation des coordonnées ---
+                Tile tileScript = tileObj.GetComponent<Tile>();
+                if (tileScript == null) 
+                {
+                    tileScript = tileObj.AddComponent<Tile>();
+                }
 
-                tiles[x, y] = tile;
+                // On injecte les coordonnées de la grille dans la tuile
+                tileScript.x = x;
+                tileScript.y = y;
+                // --------------------------------------------------
+
+                tiles[x, y] = tileObj;
             }
         }
     }
@@ -83,6 +92,10 @@ public class TileManager : MonoBehaviour
 
         // Trouver le centre de la grille
         int c = gridSize / 2; 
+        
+        // Sécurité si la grille n'a pas été créée
+        if (tiles == null || tiles[c,c] == null) return;
+
         var centerTile = tiles[c, c];
         var tileComp = centerTile.GetComponent<Tile>();
 

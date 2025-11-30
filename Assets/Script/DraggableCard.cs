@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public string cardID; // "2" ou "3"
+    public string cardID; // "2", "3", "6", "9", "10", "11"
     
     private Canvas canvas;
     private RectTransform rectTransform;
@@ -19,7 +19,7 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         canvas = GetComponentInParent<Canvas>();
     }
 
-    // --- AJOUT : Gestion visuelle (Griser) ---
+    // --- Gestion visuelle (Griser si inutilisable) ---
     void Update()
     {
         if (canvasGroup == null) return;
@@ -37,7 +37,6 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             canvasGroup.blocksRaycasts = false; // On ne peut pas drag
         }
     }
-    // -----------------------------------------
 
     public void OnBeginDrag(PointerEventData eventData)
     {
@@ -46,7 +45,7 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         originalPosition = rectTransform.position;
         canvasGroup.alpha = 0.6f; // Légère transparence pendant le drag
 
-        // Copie visuelle
+        // Copie visuelle pour le drag
         tempCard = Instantiate(gameObject, canvas.transform);
         Destroy(tempCard.GetComponent<DraggableCard>()); // La copie n'a pas de logique
         
@@ -74,7 +73,7 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        canvasGroup.alpha = 1f; // Reset opacité si on lâche (sera écrasé par Update de toute façon)
+        canvasGroup.alpha = 1f; // Reset opacité
         if (tempCard != null) Destroy(tempCard);
 
         if (!IsCardActive()) 
@@ -83,11 +82,29 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             return;
         }
 
-        // Raycast 3D
+        // --- CAS SPÉCIAL CARTE 10 (Sort Global) ---
+        // Cette carte ne vise pas une tour, elle se déclenche n'importe où
+        if (cardID == "10")
+        {
+            bool success = DrawingcardController.TryActivateCard10();
+            
+            if (success)
+            {
+                DrawingcardController.card10Used = true; // Consomme la carte
+            }
+            // Si pas d'ennemis (success = false), la carte n'est pas consommée
+            
+            ResetCard();
+            return;
+        }
+        // ------------------------------------------
+
+        // Raycast 3D pour trouver une tour sous la souris (Pour cartes 2, 3, 6, 9, 11)
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             TowerController tower = hit.collider.GetComponent<TowerController>();
+            // Si le collider est sur un enfant, on cherche le parent
             if (tower == null) tower = hit.collider.GetComponentInParent<TowerController>();
 
             if (tower != null)
@@ -106,14 +123,32 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     {
         if (cardID == "2") 
         {
-            // Dispo si on possède la carte ET que le timer est fini (<= 0)
             return DrawingcardController.card2 && DrawingcardController.card2Timer <= 0f;
         }
         if (cardID == "3") 
         {
-            // Dispo si on possède la carte ET qu'elle n'est pas marquée comme utilisée
             return DrawingcardController.card3 && !DrawingcardController.card3Used;
         }
+        if (cardID == "6")
+        {
+            return DrawingcardController.card6 && !DrawingcardController.card6Used;
+        }
+        if (cardID == "9")
+        {
+            return DrawingcardController.card9 && !DrawingcardController.card9Used;
+        }
+        if (cardID == "10")
+        {
+            // Active si on l'a piochée et qu'elle n'est pas encore utilisée
+            return DrawingcardController.card10 && !DrawingcardController.card10Used;
+        }
+        // --- AJOUT CARTE 11 ---
+        if (cardID == "11")
+        {
+            // Active si on l'a piochée (card11=true) et que le Cooldown est terminé
+            return DrawingcardController.card11 && DrawingcardController.card11Timer <= 0f;
+        }
+        // ---------------------
         return false;
     }
 
@@ -130,6 +165,24 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                 tower.BuffFoudre();
                 DrawingcardController.card3Used = true; // Marque comme utilisée
                 break;
+
+            case "6": // Scaling Speed
+                tower.ActivateKillScaling();
+                DrawingcardController.card6Used = true; // Marque comme utilisée
+                break;
+            
+            case "9": 
+                DrawingcardController.card9Used = true; 
+                break;
+
+            
+            case "11":
+                // On active la surcharge sur la tour ciblée
+                tower.ActivateSurcharge(DrawingcardController.card11Duration);
+                // On lance le cooldown global de 1min30
+                DrawingcardController.card11Timer = DrawingcardController.card11Cooldown;
+                break;
+            // ----------------------------------
         }
     }
 

@@ -4,6 +4,12 @@ using UnityEngine;
 [RequireComponent(typeof(Renderer))]
 public class Tile : MonoBehaviour
 {
+    // --- NOUVEAU : Coordonnées dans la grille ---
+    // Ces variables sont remplies par TileManager.cs au lancement
+    [HideInInspector] public int x;
+    [HideInInspector] public int y;
+    // --------------------------------------------
+
     [Header("Règles")]
     public bool singleOccupant = true;
 

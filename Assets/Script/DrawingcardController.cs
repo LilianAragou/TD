@@ -18,18 +18,46 @@ public class DrawingcardController : MonoBehaviour
     public GameManager gameManager;
     public TextMeshProUGUI rerollbutton;
 
-    // ATTENTION : Les variables statiques restent entre les scènes.
-    public static bool card1 = false;
+    // --- VARIABLES STATIQUES (Sauvegardées entre les scènes) ---
+    public static bool card1 = false; // Double Ricochet
+    
+    // Carte 2 (Orage - Active)
     public static bool card2 = false;
     public static float card2Cooldown = 15f; 
     public static float card2Timer = 0f;
     public static float card2Duration = 15f;
     public static float card2Damage = 20f;
+    
+    // Carte 3 (Buff Foudre - Active)
     public static bool card3 = false;
     public static bool card3Used = false;
-    public static bool card4 = false;
-    public static bool card5 = false;
-    public static bool card7 = false;
+    
+    public static bool card4 = false; // Stun Boost
+    public static bool card5 = false; // Dmg Foudre +15%
+    
+    // Carte 6 (Scaling Speed - Active)
+    public static bool card6 = false;
+    public static bool card6Used = false;
+
+    public static bool card7 = false; // Re-proc 30%
+
+    // Carte 8 (Synergie - Passive)
+    public static bool card8 = false; 
+
+    public static bool card9 = false;
+    public static bool card9Used = false;
+
+    // Carte 10 (Unique - Active Sort Global)
+    public static bool card10 = false;
+    public static bool card10Used = false;
+
+    // --- AJOUT CARTE 11 (Surcharge - Active sur Tour) ---
+    public static bool card11 = false;
+    public static float card11Cooldown = 90f; // 1min30
+    public static float card11Timer = 0f;     // Timer actuel
+    public static float card11Duration = 30f;  // Durée de l'effet
+    public static bool card12 = false;
+    // ----------------------------------------------------
 
     void Start()
     {
@@ -48,32 +76,37 @@ public class DrawingcardController : MonoBehaviour
 
     void ResetStatics()
     {
-        card1 = false; card2 = false; card3 = false; card4 = false; card5 = false;
+        card1 = false; card2 = false; card3 = false; card4 = false; card5 = false; card7 = false;
+        
+        card6 = false; card6Used = false;
+        card8 = false;
+        card9 = false; card9Used = false;
+        card10 = false; card10Used = false;
+
+        card11 = false;
+        card12 = false;
+        card11Timer = 0f;
+
         card2Timer = 0f;
         card3Used = false;
     }
 
     void Update()
     {
-        // MODIFICATION 1 : LOGIQUE DE TOGGLE (OUVRIR/FERMER)
         if (Input.GetKeyDown(KeyCode.D))
         {
             if (MenuUI.activeSelf)
             {
-                // Si ouvert, on ferme
                 MenuUI.SetActive(false);
             }
             else
             {
-                // Si fermé, on ouvre.
-                // Si la main est vide (premier lancement), on pioche.
                 if (drawnCards.Count == 0)
                 {
                     drawCard(false);
                 }
                 else
                 {
-                    // Sinon on affiche juste la main existante (qui a été pré-rollée)
                     MenuUI.SetActive(true);
                 }
             }
@@ -82,17 +115,17 @@ public class DrawingcardController : MonoBehaviour
         if (rerollbutton)
             rerollbutton.text = "Reroll = " + rerollCost + "$";
 
-        if (card2Timer > 0f)
-        {
-            card2Timer -= Time.deltaTime;
-        }
+        // Gestion des timers
+        if (card2Timer > 0f) card2Timer -= Time.deltaTime;
+
+        // --- TIMER CARTE 11 ---
+        if (card11Timer > 0f) card11Timer -= Time.deltaTime;
+        // ----------------------
     }
 
     void drawCard(bool reroll)
     {
-        // On remplit la liste temporaire avec TOUTES les cartes restantes
         temporaryCards = new List<string>(cards);
-
         drawnCards.Clear();
 
         for (int i = 0; i < handSize; i++)
@@ -101,25 +134,20 @@ public class DrawingcardController : MonoBehaviour
 
             if (temporaryCards.Count > 0)
             {
-                // Cas normal : Il reste des cartes
                 int randomIndex = Random.Range(0, temporaryCards.Count);
                 string drawnCard = temporaryCards[randomIndex];
 
                 drawnCards.Add(drawnCard);
                 slotImage.color = getColor(drawnCard);
 
-                // On retire de la liste temporaire pour éviter les doublons dans la main actuelle
                 temporaryCards.RemoveAt(randomIndex);
             }
             else
             {
-                // Cas vide : Cartes noires
                 drawnCards.Add("EMPTY");
                 slotImage.color = Color.black;
             }
         }
-
-        // On affiche le menu à la fin du tirage
         MenuUI.SetActive(true);
     }
 
@@ -127,12 +155,21 @@ public class DrawingcardController : MonoBehaviour
     {
         return cardName switch
         {
-            "1" => new Color(1f, 0f, 0f, 1f),
-            "2" => new Color(0f, 1f, 0f, 1f),
-            "3" => new Color(0f, 0f, 1f, 1f),
-            "4" => new Color(1f, 1f, 0f, 1f),
-            "5" => new Color(1f, 0f, 1f, 1f),
-            _ => new Color(0.2f, 0.2f, 0.2f, 1f),
+            "1" => new Color(1f, 0f, 0f, 1f),       // Rouge
+            "2" => new Color(0f, 1f, 0f, 1f),       // Vert
+            "3" => new Color(0f, 0f, 1f, 1f),       // Bleu
+            "4" => new Color(1f, 1f, 0f, 1f),       // Jaune
+            "5" => new Color(1f, 0f, 1f, 1f),       // Magenta
+            "6" => new Color(0f, 1f, 1f, 1f),       // Cyan
+            "7" => new Color(0.5f, 0f, 0.5f, 1f),   // Violet foncé
+            "8" => new Color(1f, 0.5f, 0f, 1f),     // Orange
+            "9" => new Color(0.8f, 0f, 0.8f, 1f),   // Violet clair
+            "10" => new Color(1f, 0.84f, 0f, 1f),   // Gold
+            // --- AJOUT : Rouge Vif "Danger" pour la 11 ---
+            "11" => new Color(1f, 0.2f, 0.2f, 1f), 
+            "12" => new Color(0.5f, 0.5f, 0.5f, 1f), 
+            // ---------------------------------------------
+            _ => new Color(0.2f, 0.2f, 0.2f, 1f),   // Gris
         };
     }
 
@@ -154,16 +191,14 @@ public class DrawingcardController : MonoBehaviour
 
         string chosen = drawnCards[index];
 
-        // Sécurité Clic sur case vide
         if (chosen == "EMPTY") return;
 
-        // Suppression définitive du pool global
         if (cards.Contains(chosen))
         {
             cards.Remove(chosen);
         }
 
-        // Activation
+        // Activation des effets
         switch (chosen)
         {
             case "1": card1 = true; break;
@@ -171,16 +206,21 @@ public class DrawingcardController : MonoBehaviour
             case "3": card3 = true; card3Used = false; break;
             case "4": card4 = true; break;
             case "5": card5 = true; break;
+            case "6": card6 = true; card6Used = false; break;
+            case "7": card7 = true; break;
+            case "8": card8 = true; break;
+            case "9": card9 = true; card9Used = false; break;
+            case "10": card10 = true; card10Used = false; break;
+            // --- AJOUT CARTE 11 ---
+            case "11": card11 = true; break;
+            case "12": card12 = true; break;
+            // ----------------------
         }
 
         AddToOwnedCards(chosen);
 
-        // MODIFICATION 2 : AUTO-REROLL POUR LA PROCHAINE FOIS
-        // 1. On génère immédiatement la nouvelle main avec les cartes restantes (sans payer)
+        // Auto-reroll
         drawCard(false);
-        
-        // 2. Mais on ferme le menu tout de suite pour ne pas gêner le joueur.
-        // La prochaine fois qu'il appuiera sur 'D', la main sera déjà prête.
         MenuUI.SetActive(false);
     }
 
@@ -189,12 +229,15 @@ public class DrawingcardController : MonoBehaviour
         foreach (GameObject slot in ownedCardsObjects)
         {
             TMP_Text text = slot.GetComponentInChildren<TMP_Text>();
+            
             if (text != null && string.IsNullOrEmpty(text.text))
             {
                 slot.GetComponent<Image>().color = getColor(cardName);
                 text.text = cardName;
 
-                if (cardName == "2" || cardName == "3")
+                // --- GESTION DES CARTES DRAGGABLES ---
+                // On ajoute "11" à la liste des cartes qui ont besoin du script DraggableCard
+                if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" || cardName == "10" || cardName == "11")
                 {
                     if (slot.GetComponent<CanvasGroup>() == null) 
                         slot.AddComponent<CanvasGroup>();
@@ -206,8 +249,39 @@ public class DrawingcardController : MonoBehaviour
                     }
                     existingDrag.cardID = cardName;
                 }
+                
                 return;
             }
         }
+    }
+
+    public static bool TryActivateCard10()
+    {
+        // 1. Trouver tous les ennemis
+        EnemyController[] enemies = FindObjectsOfType<EnemyController>();
+        
+        if (enemies.Length == 0) return false;
+
+        EnemyController bestTarget = null;
+        float highestMaxHP = -1f;
+
+        // 2. Chercher celui avec le plus de MaxHealth
+        foreach (EnemyController enemy in enemies)
+        {
+            if (enemy.maxHealth > highestMaxHP)
+            {
+                highestMaxHP = enemy.maxHealth;
+                bestTarget = enemy;
+            }
+        }
+
+        // 3. Appliquer l'effet
+        if (bestTarget != null)
+        {
+            bestTarget.ApplyLightningMark();
+            return true; // Succès
+        }
+
+        return false;
     }
 }

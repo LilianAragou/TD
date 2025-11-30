@@ -321,7 +321,7 @@ MonoBehaviour:
     delayBeforeWave: 2
     duration: 5
   - pairs:
-    - count: 5
+    - count: 50
       prefab: {fileID: 1295372189224343000, guid: baf74254336387f48b045d507fa8cbc5, type: 3}
     - count: 5
       prefab: {fileID: 1295372189224343000, guid: fbb8b0c346bbc344397f48dead225e75, type: 3}
@@ -6086,7 +6086,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Skadi - Tour de givre
+  m_text: "Skadi - Cryost\xE8le"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -6991,7 +6991,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dbf8910986bd1141876bb6829c8613f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerPrefab: {fileID: 8547514799542012830, guid: 93fac1d230447c2418a17352717a4f03, type: 3}
+  towerPrefab: {fileID: 3995687825440325567, guid: c408d438233084b47bd506a14fcb7f56, type: 3}
   dragRootCanvas: {fileID: 6720368231006287507}
   iconForDrag: {fileID: 0}
   tileLayerName: Tile

@@ -25,6 +25,7 @@ public class PojectileController : MonoBehaviour
     // Optimisation : pour ne pas chercher les ennemis sur toute la map
     private int enemyLayerMask;
 
+
     void Start()
     {
         // On récupère le mask pour Physics.OverlapSphere
@@ -67,7 +68,7 @@ public class PojectileController : MonoBehaviour
                 float x = centerPointForPatrol.position.x + radiusForPatrol * Mathf.Cos(angleForPatrol);
                 float z = centerPointForPatrol.position.z + radiusForPatrol * Mathf.Sin(angleForPatrol);
                 
-                transform.position = new Vector3(x, 0, z); // Y=1f pour flotter au-dessus du sol
+                transform.position = new Vector3(x, 0, z); // Y=0 pour être au sol (ou 1f si tu veux flotter)
                 
                 // Rotation tangentielle (pour faire joli)
                 Vector3 nextPos = new Vector3(
@@ -142,9 +143,7 @@ public class PojectileController : MonoBehaviour
                 if (isKill)
                 {
                     // --- CARTE 1 : Double Ricochet ---
-                    // "Toutes les tours du marteau ricochent 2 éclairs au lieu d'un seul sur un kill"
                     int bounceCount = DrawingcardController.card1 ? 2 : 1;
-                    
                     Ricochet(bounceCount, hitObject.transform);
                 }
                 
@@ -164,7 +163,6 @@ public class PojectileController : MonoBehaviour
                             ApplyDamage(areaEnemy, damage);
                             
                             // --- CARTE 4 : Stun Augmenté ---
-                            // "Augmente la durée de stun de pilier orageux de 0.75s"
                             float stunTime = 0.75f;
                             if (DrawingcardController.card4) stunTime += 0.75f; // Total 1.5s
 
@@ -209,7 +207,10 @@ public class PojectileController : MonoBehaviour
                 {
                     // Exécution des faibles PV
                     float execDmg = enemyHealth.health + 1f;
-                    enemyHealth.TakeDamage(execDmg, mummyTower != null ? mummyTower.dmgType : DamageType.Base);
+                    
+                    // --- MODIFICATION ICI : On passe aussi mummyTower pour le kill count de l'exec ---
+                    enemyHealth.TakeDamage(execDmg, mummyTower != null ? mummyTower.dmgType : DamageType.Base, mummyTower);
+                    
                     if (mummyTower) mummyTower.stockedDamage += enemyHealth.health * 0.2f;
                 }
                 Destroy(gameObject);
@@ -238,8 +239,6 @@ public class PojectileController : MonoBehaviour
                 ApplyDamage(enemyHealth, damage);
                 break;
                 
-            // ... Ajoutez les autres cas (InfernalForge, Baldr, etc.) ici si besoin ...
-            
             default:
                 // Tir standard
                 ApplyDamage(enemyHealth, damage);
@@ -253,10 +252,17 @@ public class PojectileController : MonoBehaviour
     {
         if (enemy == null) return;
         
-        // On utilise le type de la tour, sinon Physique par défaut
         DamageType type = (mummyTower != null) ? mummyTower.dmgType : DamageType.Base;
-        enemy.TakeDamage(amount, type);
-
+        
+        // --- MODIFICATION CRUCIALE POUR CARTE 6 ---
+        // On passe 'mummyTower' (l'attaquant) à TakeDamage.
+        // Ainsi, si l'ennemi meurt, il peut prévenir la tour via RegisterKill().
+        enemy.TakeDamage(amount, type, mummyTower);
+        // -------------------------------------------
+        if (mummyTower.electriqueCourantActivated)
+        {
+            enemy.TakeDamage(20, DamageType.Foudre, mummyTower);
+        }
         // Stockage des stats
         if (mummyTower != null)
         {
@@ -275,7 +281,7 @@ public class PojectileController : MonoBehaviour
         int count = 0;
         foreach (Collider col in nearby)
         {
-            if (count >= targetsToFind) break; // On s'arrête si on a trouvé le nombre max de cibles (1 ou 2)
+            if (count >= targetsToFind) break; 
             
             // On ne re-touche pas le mort et on vérifie le tag
             if (col.transform == deadTargetTransform || !col.CompareTag("Enemy")) continue;
@@ -285,9 +291,6 @@ public class PojectileController : MonoBehaviour
             {
                 // On applique les dégâts directement (effet éclair instantané)
                 ApplyDamage(chainEnemy, damage);
-                
-                // ICI : Ajouter un effet visuel (LineRenderer) entre deadTargetTransform et chainEnemy.transform serait top
-                
                 count++;
             }
         }
