@@ -317,6 +317,92 @@ public class TowerController : MonoBehaviour
 
     void HandleAuraTowerLogic()
     {
+        // --- NOUVEAU : WIND TOTEM (Totem des Vents) CIBLE UNIQUE ---
+        if (towerID == "WindTotem")
+        {
+            if (cooldownTime <= 0f)
+            {
+                Collider[] hitEnemies = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
+                
+                // 1. Trouver LA cible unique (la plus proche du Nexus)
+                Transform bestTarget = null;
+                float bestDistToNexus = Mathf.Infinity;
+
+                foreach (Collider enemy in hitEnemies)
+                {
+                    if (!enemy.CompareTag(enemyTag)) continue;
+                    
+                    // On cherche celui qui est le plus proche de (0,0,0)
+                    float distToNexus = Vector3.Distance(Vector3.zero, enemy.transform.position);
+                    if (distToNexus < bestDistToNexus)
+                    {
+                        bestDistToNexus = distToNexus;
+                        bestTarget = enemy.transform;
+                    }
+                }
+
+                // 2. Si on a trouvé une cible, on frappe
+                if (bestTarget != null)
+                {
+                    EnemyController enemyHealth = bestTarget.GetComponent<EnemyController>();
+                    if (enemyHealth != null)
+                    {
+                        float finalDamage = attackDamage; 
+                        if (isSurcharged) finalDamage *= 11f; // Carte 11
+
+                        // Dégâts
+                        enemyHealth.TakeDamage(finalDamage, dmgType, this);
+                        
+                        // Recul (Direction : Tour -> Ennemi)
+                        Vector3 pushDir = (bestTarget.position - transform.position).normalized;
+                        pushDir.y = 0; 
+                        
+                        enemyHealth.getKnockBacked(3f, pushDir);
+
+                        // On lance le cooldown seulement si on a tiré
+                        cooldownTime = attackCooldown;
+                    }
+                }
+            }
+            return;
+        }
+        // -----------------------------------------------------------
+
+        // --- Volcano Tower (Burn) ---
+        if (towerID == "VolcanoTower")
+        {
+            // On applique les dégâts par "Tick" (intervalle régulier)
+            // Pour simuler 30 damage/s, on peut tick tous les 0.5s et faire 15 dégâts.
+            float tickRate = 0.5f;
+
+            if (cooldownTime <= 0f)
+            {
+                Collider[] hitEnemies = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
+                
+                // Calcul des dégâts par tick
+                // attackDamage = DPS souhaité (ex: 30 dans l'inspecteur)
+                float damagePerTick = attackDamage * tickRate;
+
+                // Application CARTE 11 (Surcharge) sur l'Aura
+                if (isSurcharged) damagePerTick *= 11f;
+
+                foreach (Collider enemy in hitEnemies)
+                {
+                    if (enemy.CompareTag(enemyTag))
+                    {
+                        EnemyController enemyHealth = enemy.GetComponent<EnemyController>();
+                        if (enemyHealth != null)
+                        {
+                            enemyHealth.TakeDamage(damagePerTick, dmgType, this);
+                        }
+                    }
+                }
+                cooldownTime = tickRate; 
+            }
+            return; 
+        }
+        // -------------------------------
+
         // --- ThorPillar (Stun de zone) ---
         if (towerID == "ThorPillar")
         {
@@ -345,6 +431,7 @@ public class TowerController : MonoBehaviour
         }
 
         // --- Standard Auras ---
+    
         if (towerID != "OdinEye" && towerID != "BaldrObelisk")
         {
             Collider[] hitEnemies = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);

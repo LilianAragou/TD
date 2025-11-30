@@ -55,7 +55,7 @@ public class DrawingcardController : MonoBehaviour
     public static bool card11 = false;
     public static float card11Cooldown = 90f; // 1min30
     public static float card11Timer = 0f;     // Timer actuel
-    public static float card11Duration = 30f;  // Durée de l'effet
+    public static float card11Duration = 3f;  // Durée de l'effet
     public static bool card12 = false;
     // ----------------------------------------------------
 

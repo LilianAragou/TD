@@ -5,7 +5,7 @@ public class PojectileController : MonoBehaviour
 {
     [Header("Configuration")]
     public Transform target;
-    public float damage;
+    public float damage; // Contient les dégâts de base (ex: 40) déjà multipliés par les cartes
     public float speed;
     public string towerID;
     public TowerController mummyTower; // Référence à la tour mère
@@ -22,13 +22,10 @@ public class PojectileController : MonoBehaviour
     private float lifeTime = 0f;
     private float maxLifeTime = 5f;
 
-    // Optimisation : pour ne pas chercher les ennemis sur toute la map
     private int enemyLayerMask;
-
 
     void Start()
     {
-        // On récupère le mask pour Physics.OverlapSphere
         enemyLayerMask = LayerMask.GetMask("Enemy");
         if (enemyLayerMask == 0) enemyLayerMask = LayerMask.GetMask("Default");
     }
@@ -40,18 +37,15 @@ public class PojectileController : MonoBehaviour
         // --- MOUVEMENT STANDARD VERS CIBLE ---
         if (target != null && !isPatrol)
         {
-            // Mouvement sur le plan X/Z uniquement (on ignore la hauteur Y pour éviter de tirer dans le sol/ciel)
             Vector3 direction = target.position - transform.position;
             direction.y = 0; 
 
             if (direction != Vector3.zero)
             {
-                // Rotation visuelle vers la cible
                 transform.rotation = Quaternion.LookRotation(direction);
                 transform.position += direction.normalized * speed * Time.deltaTime;
             }
 
-            // Détection manuelle de proximité (backup si la collision physique rate)
             if (Vector3.Distance(transform.position, target.position) < 0.2f)
             {
                 HitTarget(target.gameObject);
@@ -64,13 +58,11 @@ public class PojectileController : MonoBehaviour
             {
                 angleForPatrol += speed * Time.deltaTime;
                 
-                // Calcul trigonométrique sur X et Z (Plan horizontal 3D)
                 float x = centerPointForPatrol.position.x + radiusForPatrol * Mathf.Cos(angleForPatrol);
                 float z = centerPointForPatrol.position.z + radiusForPatrol * Mathf.Sin(angleForPatrol);
                 
-                transform.position = new Vector3(x, 0, z); // Y=0 pour être au sol (ou 1f si tu veux flotter)
+                transform.position = new Vector3(x, 0, z);
                 
-                // Rotation tangentielle (pour faire joli)
                 Vector3 nextPos = new Vector3(
                     centerPointForPatrol.position.x + radiusForPatrol * Mathf.Cos(angleForPatrol + 0.1f),
                     0,
@@ -86,72 +78,72 @@ public class PojectileController : MonoBehaviour
         // --- NETTOYAGE ---
         else if (target == null && !isPatrol && !isPanickShot)
         {
-            // Si la cible est morte avant l'impact, on détruit le projectile
             Destroy(gameObject);
         }
 
-        // Sécurité temps de vie max
         if (lifeTime > maxLifeTime && towerID != "TwinWind")
         {
             Destroy(gameObject);
         }
     }
 
-    // --- GESTION DES COLLISIONS 3D ---
-    
     void OnTriggerEnter(Collider other)
     {
-        // Si on touche un ennemi
         if (other.CompareTag("Enemy"))
         {
-            // Pour TwinWind, on touche sans détruire
-            if (towerID == "TwinWind")
-            {
-                HitTarget(other.gameObject); // Applique dégâts + recul
-                // On ne détruit PAS le projectile ici car c'est une aura
-            }
-            else
-            {
-                // Pour les autres, on touche et on détruit (géré dans HitTarget)
-                HitTarget(other.gameObject);
-            }
+            // TwinWind traverse, les autres s'arrêtent
+            if (towerID == "TwinWind") HitTarget(other.gameObject);
+            else HitTarget(other.gameObject);
         }
     }
-
-    // --- LOGIQUE D'IMPACT PAR TYPE DE TOUR ---
 
     void HitTarget(GameObject hitObject)
     {
         EnemyController enemyHealth = hitObject.GetComponent<EnemyController>();
         if (enemyHealth == null) return;
 
-        // Application des dégâts de base
-        // Note: La variable 'damage' a déjà été boostée par la Carte 5 dans TowerController.FireProjectile
+        // La variable 'damage' contient le BaseDamage (40) * Multiplicateurs (Carte 11, Carte 5...)
         
         switch (towerID)
         {
+            // --- NOUVEAU : FORGE INFERNALE ---
+            case "ForgeInfernale":
+                // Consigne : "40 + 1% PV Max sur 1s" avec "1 tir / 0.2s" (donc 5 tirs/s)
+                // On doit donc diviser les dégâts par 5 pour avoir la valeur par projectile.
+                
+                // 1. Partie Base (40)
+                // 'damage' contient déjà 40 * Multiplicateurs. On divise par 5.
+                float baseDmgPerShot = damage * 0.2f; 
+
+                // 2. Partie % PV Max (1%)
+                float hpPercentDamage = enemyHealth.maxHealth * 0.01f;
+
+                // On divise par 5 (pour répartir le 1% sur la seconde entière)
+                float hpDmgPerShot = hpPercentDamage * 0.2f;
+
+                // 3. Total
+                ApplyDamage(enemyHealth, baseDmgPerShot + hpDmgPerShot);
+                Destroy(gameObject);
+                break;
+            // ---------------------------------
+
             case "ThorTotem":
                 ApplyDamage(enemyHealth, damage);
                 Destroy(gameObject);
                 break;
 
             case "ThorHammer":
-                // Logique : Si on tue la cible, on ricoche
                 bool isKill = (enemyHealth.health <= damage);
                 ApplyDamage(enemyHealth, damage);
-
                 if (isKill)
                 {
-                    // --- CARTE 1 : Double Ricochet ---
                     int bounceCount = DrawingcardController.card1 ? 2 : 1;
                     Ricochet(bounceCount, hitObject.transform);
                 }
-                
                 Destroy(gameObject);
                 break;
 
             case "ThorPillar":
-                // Dégâts de zone
                 Collider[] areaHits = Physics.OverlapSphere(transform.position, 1.5f, enemyLayerMask);
                 foreach (var hit in areaHits)
                 {
@@ -161,11 +153,8 @@ public class PojectileController : MonoBehaviour
                         if (areaEnemy != null)
                         {
                             ApplyDamage(areaEnemy, damage);
-                            
-                            // --- CARTE 4 : Stun Augmenté ---
                             float stunTime = 0.75f;
-                            if (DrawingcardController.card4) stunTime += 0.75f; // Total 1.5s
-
+                            if (DrawingcardController.card4) stunTime += 0.75f; 
                             areaEnemy.GetStunned(stunTime);
                         }
                     }
@@ -205,91 +194,61 @@ public class PojectileController : MonoBehaviour
                 ApplyDamage(enemyHealth, damage);
                 if (enemyHealth.health <= enemyHealth.maxHealth * 0.2f)
                 {
-                    // Exécution des faibles PV
                     float execDmg = enemyHealth.health + 1f;
-                    
-                    // --- MODIFICATION ICI : On passe aussi mummyTower pour le kill count de l'exec ---
                     enemyHealth.TakeDamage(execDmg, mummyTower != null ? mummyTower.dmgType : DamageType.Base, mummyTower);
-                    
                     if (mummyTower) mummyTower.stockedDamage += enemyHealth.health * 0.2f;
                 }
                 Destroy(gameObject);
                 break;
 
-            case "VolcanoTower":
-                // Spawn de la zone de lave
-                GameObject aoe = Instantiate(aoePrefab, transform.position, Quaternion.identity);
-                AOEManager aoeManager = aoe.GetComponent<AOEManager>();
-                if (aoeManager != null)
-                {
-                    aoeManager.mummyTower = mummyTower;
-                    aoeManager.damage = damage;
-                    aoeManager.radius = 0.8f;
-                    aoeManager.duration = 10f;
-                    aoeManager.tickInterval = 0.1f;
-                }
-                Destroy(gameObject);
-                break;
-
             case "TwinWind":
-                // Recul + Dégâts (sans détruire l'aura)
                 Vector3 pushDir = (hitObject.transform.position - transform.position).normalized;
-                pushDir.y = 0; // Pas de vol plané
+                pushDir.y = 0; 
                 enemyHealth.getKnockBacked(1.5f, pushDir);
                 ApplyDamage(enemyHealth, damage);
                 break;
                 
             default:
-                // Tir standard
                 ApplyDamage(enemyHealth, damage);
                 Destroy(gameObject);
                 break;
         }
     }
 
-    // Helper pour appliquer les dégâts
     void ApplyDamage(EnemyController enemy, float amount)
     {
         if (enemy == null) return;
         
         DamageType type = (mummyTower != null) ? mummyTower.dmgType : DamageType.Base;
         
-        // --- MODIFICATION CRUCIALE POUR CARTE 6 ---
-        // On passe 'mummyTower' (l'attaquant) à TakeDamage.
-        // Ainsi, si l'ennemi meurt, il peut prévenir la tour via RegisterKill().
+        // On passe mummyTower pour les compteurs de kill (Carte 6)
         enemy.TakeDamage(amount, type, mummyTower);
-        // -------------------------------------------
-        if (mummyTower.electriqueCourantActivated)
+        
+        if (mummyTower != null && mummyTower.electriqueCourantActivated)
         {
             enemy.TakeDamage(20, DamageType.Foudre, mummyTower);
         }
-        // Stockage des stats
+        
         if (mummyTower != null)
         {
             mummyTower.stockedDamage += amount * (1 + enemy.debuffDamage / 100f);
         }
     }
 
-    // Logique de Ricochet (ThorHammer / Carte 1)
     void Ricochet(int targetsToFind, Transform deadTargetTransform)
     {
         if (mummyTower == null) return;
 
-        // Cherche les ennemis proches
         Collider[] nearby = Physics.OverlapSphere(transform.position, mummyTower.attackRange, enemyLayerMask);
-        
         int count = 0;
         foreach (Collider col in nearby)
         {
             if (count >= targetsToFind) break; 
-            
-            // On ne re-touche pas le mort et on vérifie le tag
             if (col.transform == deadTargetTransform || !col.CompareTag("Enemy")) continue;
 
             EnemyController chainEnemy = col.GetComponent<EnemyController>();
             if (chainEnemy != null && chainEnemy.health > 0)
             {
-                // On applique les dégâts directement (effet éclair instantané)
                 ApplyDamage(chainEnemy, damage);
                 count++;
             }
