@@ -223,6 +223,15 @@ public class PojectileController : MonoBehaviour
         
         // On passe mummyTower pour les compteurs de kill (Carte 6)
         enemy.TakeDamage(amount, type, mummyTower);
+
+        // --- CARTE 15 : FLAMME SOLITAIRE ---
+        // Si la tour est isolée, chaque "Toucher" inflige 30 dégâts de FEU supplémentaires.
+        // Comme ApplyDamage est appelé pour tout impact (Ricochet, AOE, Tir direct), cela couvre tout.
+        if (mummyTower != null && mummyTower.hasSolitaryFlame)
+        {
+            enemy.TakeDamage(30f, DamageType.Feu, mummyTower);
+        }
+        // -----------------------------------
         
         if (mummyTower != null && mummyTower.electriqueCourantActivated)
         {

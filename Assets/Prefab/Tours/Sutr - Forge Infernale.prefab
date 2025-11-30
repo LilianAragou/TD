@@ -142,6 +142,7 @@ MonoBehaviour:
   isThorPaired: 0
   isSurcharged: 0
   hasDoubleRangeVolca: 0
+  hasTwinForge: 0
 --- !u!65 &4463846807996242364
 BoxCollider:
   m_ObjectHideFlags: 0

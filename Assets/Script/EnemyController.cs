@@ -35,23 +35,20 @@ public class EnemyController : MonoBehaviour
     public float chefRange = 1.5f;
     public float clercRange = 1.5f;
     
-    // --- AJOUT CARTE 10 (Unique) ---
     [Header("Card 10 - Unique")]
-    public bool isLightningMarked = false; // Cible prioritaire (+300% Foudre)
-    // -------------------------------
+    public bool isLightningMarked = false; 
 
     public float traveled = 0f;
     private float berserkDamage = 0f;
 
     [Header("Diminishing Returns (Stun)")]
-    public float stunResetTime = 5f;     // Temps sans stun pour revenir à la normale
-    public float stunDecay = 0.8f;       // Facteur de réduction (0.8 = 80% de la durée précédente)
-    public float minStunDuration = 0.1f; // Durée minimum d'un stun
+    public float stunResetTime = 5f;     
+    public float stunDecay = 0.8f;       
+    public float minStunDuration = 0.1f; 
 
-    // Variables internes pour le Stun
     private float currentStunMultiplier = 1f;
     private float lastStunEndTime = -10f; 
-    private float savedSpeedBeforeStun = -1f; // -1 signifie "pas sauvegardé"
+    private float savedSpeedBeforeStun = -1f; 
     private Coroutine currentStunRoutine;
     public bool isStunned = false;
 
@@ -72,10 +69,8 @@ public class EnemyController : MonoBehaviour
 
     void Awake()
     {
-        // Recherche sécurisée du GameManager
         GameObject gmObj = GameObject.Find("GameManager");
         if (gmObj) gameManager = gmObj.GetComponent<GameManager>();
-        
         secretSpeed = speed;
     }
 
@@ -90,7 +85,6 @@ public class EnemyController : MonoBehaviour
     {
         float currentSpeed = speed;
 
-        // Gestion des ralentissements (Slows)
         for (int i = activeSlows.Count - 1; i >= 0; i--)
         {
             activeSlows[i].timeLeft -= Time.deltaTime;
@@ -101,7 +95,7 @@ public class EnemyController : MonoBehaviour
             }
             currentSpeed *= 1f - activeSlows[i].amount / 100f;
             if (currentSpeed < speed * 0.1f)
-                currentSpeed = speed * 0.1f; // Limite de ralentissement à 90%
+                currentSpeed = speed * 0.1f; 
         }
 
         secretSpeed = currentSpeed;
@@ -110,18 +104,14 @@ public class EnemyController : MonoBehaviour
             secretSpeed = 0f;
         }
 
-        // Mécanique Skadi (3 coups = stun)
-        if (SkadiShotCalculator >= 3f) // >= par sécurité
+        if (SkadiShotCalculator >= 3f) 
         {
             GetStunned(0.75f);
             SkadiShotCalculator = 0f;
         }
 
-        // Mouvement
-        target = Vector3.zero; // Target semble inutilisé ou reset ici ?
+        target = Vector3.zero; 
         direction = (target - transform.position).normalized;
-        
-        // Note: Si 'speed' est mis à 0 par le stun, 'currentSpeed' et 'secretSpeed' vaudront 0 ici.
         transform.position += direction * secretSpeed * Time.deltaTime;
         
         if (direction != Vector3.zero)
@@ -147,13 +137,11 @@ public class EnemyController : MonoBehaviour
             damage *= 1.15f;
         }
 
-        // --- AJOUT CARTE 10 : Vulnérabilité Extrême ---
-        // Si marqué ET dégâts de foudre = Dégâts x4 (+300%)
+        // Carte 10
         if (isLightningMarked && type == DamageType.Foudre)
         {
             damage *= 4.0f; 
         }
-        // ----------------------------------------------
 
         if (type == DamageType.Feu && isPorteur)
         {
@@ -181,10 +169,10 @@ public class EnemyController : MonoBehaviour
 
         health -= damage;
         berserkDamage += damage;
+    
 
         if (health <= 0f)
         {
-            // Carte 6 : Kill Scaling
             if (attacker != null)
             {
                 attacker.RegisterKill();
@@ -194,7 +182,6 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
-        // Carte 7 : 30% de chances de réappliquer
         if (type == DamageType.Foudre && DrawingcardController.card7)
         {
             if (Random.value < 0.5f)
@@ -204,14 +191,52 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    // --- CARTE 10 : Fonction d'application de la marque ---
     public void ApplyLightningMark()
     {
         isLightningMarked = true;
-        // Effet visuel optionnel (Feedback pour le joueur)
-        Debug.Log($"{gameObject.name} est marqué pour la mort ! (+300% Foudre)");
     }
-    // -----------------------------------------------------
+
+    // --- LOGIQUE CARTE 14 ---
+    public void ApplySolarPlague()
+    {
+
+        if (activeDots.ContainsKey("SolarPlague"))
+        {
+            StopCoroutine(activeDots["SolarPlague"]);
+        }
+        activeDots["SolarPlague"] = StartCoroutine(SolarPlagueCoroutine());
+    }
+
+    private System.Collections.IEnumerator SolarPlagueCoroutine()
+    {
+        float duration = 3f;
+        float elapsed = 0f;
+
+
+        while (elapsed < duration)
+        {
+            // Attendre 1 seconde avant le tick
+            yield return new WaitForSeconds(1f);
+
+            if (health <= 0) yield break;
+
+            // Calcul : 1% des PV ACTUELS
+            float burnDamage = health * 0.01f;
+            if (burnDamage < 1f) burnDamage = 1f; // Minimum 1 dmg
+
+            //Debug.Log($"DOT Peste Solaire Tick: -{burnDamage} PV (Type Base)");
+
+            
+        
+            TakeDamage(burnDamage, DamageType.Base, null);
+
+            elapsed += 1f;
+        }
+        
+        if (activeDots.ContainsKey("SolarPlague")) 
+            activeDots.Remove("SolarPlague");
+    }
+    // ------------------------
 
     private void Die()
     {
@@ -221,36 +246,30 @@ public class EnemyController : MonoBehaviour
         Destroy(gameObject);
     }
 
-    // --- SYSTÈME DE STUN (Diminishing Returns) ---
     public void GetStunned(float duration)
     {
-        // 1. Vérifier si on doit RESET la résistance
         if (Time.time > lastStunEndTime + stunResetTime)
         {
-            currentStunMultiplier = 1f; // Reset complet
+            currentStunMultiplier = 1f; 
         }
 
-        // 2. Calculer la durée effective
         float effectiveDuration = duration * currentStunMultiplier;
         if (effectiveDuration < minStunDuration) effectiveDuration = minStunDuration;
         float effectiveDurationCopy = effectiveDuration;
-        // 3. Réduction pour le prochain stun
+        
         while (effectiveDurationCopy > 1.0f)
         {
             currentStunMultiplier *= stunDecay;
             effectiveDurationCopy -= 1.0f;
         }
         
-        // 4. Si déjà stun → on ajoute le temps restant
         if (isStunned)
         {
-            // Prolonge la fin du stun actuelle
             if (lastStunEndTime < Time.time)
                 lastStunEndTime = Time.time + effectiveDuration;
         }
         else
         {
-            // Nouveau stun
             lastStunEndTime = Time.time + effectiveDuration;
             if (currentStunRoutine != null) StopCoroutine(currentStunRoutine);
             currentStunRoutine = StartCoroutine(StunCoroutine());
@@ -260,16 +279,11 @@ public class EnemyController : MonoBehaviour
     private System.Collections.IEnumerator StunCoroutine()
     {
         isStunned = true;
-
-        // Tant que le stun n’est pas fini
         while (Time.time < lastStunEndTime)
         {
-            yield return null; // Attente frame par frame
+            yield return null; 
         }
-
-        // Fin du stun
         isStunned = false;
-
         currentStunRoutine = null;
     }
 
@@ -277,7 +291,7 @@ public class EnemyController : MonoBehaviour
     {
         foreach (var s in activeSlows)
         {
-            if (s.towerID == towerID) return; // Pas de stack du même ID
+            if (s.towerID == towerID) return; 
         }
         activeSlows.Add(new SlowEffect { amount = slowAmount, timeLeft = duration, towerID = towerID });
     }
@@ -333,7 +347,6 @@ public class EnemyController : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
-            // Note : Ici on passe null pour l'attacker car DOT ne stocke pas la référence TowerController
             TakeDamage(damage, damageType, null); 
             yield return new WaitForSeconds(interval);
             elapsed += interval;

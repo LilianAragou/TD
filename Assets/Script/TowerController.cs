@@ -74,15 +74,27 @@ public class TowerController : MonoBehaviour
     private float adjacencyCheckTimer = 0f;
     private float adjacencyCheckInterval = 1.0f; // Vérification toutes les secondes
     
-    // Carte 11 : Surcharge (AJOUT)
+    // Carte 11 : Surcharge
     [Header("Carte 11 - Surcharge")]
     public bool isSurcharged = false;
 
     // Aura Projectiles (TwinWind)
     private List<GameObject> auraProjectiles = new List<GameObject>();
     private float[] angles;
+    
+    // Carte 12
     [Header("Carte 12")]
     public bool hasDoubleRangeVolca = false;
+
+    // Carte 13
+    [Header("Carte 13")]
+    public bool hasTwinForge = false;
+
+    // --- AJOUT CARTE 15 : FLAMME SOLITAIRE ---
+    [Header("Carte 15")]
+    public bool hasSolitaryFlame = false;      // La carte est équipée sur la tour
+    public bool isSolitaryFlameActive = false; // La condition de distance est respectée (Dynamique)
+    // -----------------------------------------
 
     void Start()
     {
@@ -107,27 +119,31 @@ public class TowerController : MonoBehaviour
             ApplyFoudreBufferToNeighbors();
         }
 
-        // --- LOGIQUE CARTE 8 (Check Voisins via Grille) ---
-    
+        // --- LOGIQUE CARTE 8 & 15 (Check Voisins via Grille) ---
+        // Exécuté une fois par seconde pour optimiser
         adjacencyCheckTimer -= Time.deltaTime;
         if (adjacencyCheckTimer <= 0f)
         {
+            // Synergie Thor (Carte 8)
             if (DrawingcardController.card8 && towerID == "ThorTotem")
             {
                 CheckThorAdjacency();
             }
+            // Courant électrique
             if (hasElectriqueCourant)
             {
                 Collider[] hits = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
-                if (hits.Length >= 10)
-                {
-                    electriqueCourantActivated = true;
-                }
-                else
-                {
-                    electriqueCourantActivated = false;
-                }
+                if (hits.Length >= 10) electriqueCourantActivated = true;
+                else electriqueCourantActivated = false;
             }
+
+            // --- CARTE 15 : Vérification Dynamique ---
+            if (hasSolitaryFlame)
+            {
+                CheckSolitaryCondition();
+            }
+            // -----------------------------------------
+
             adjacencyCheckTimer = adjacencyCheckInterval;
         }
         // --------------------------------------------------
@@ -170,6 +186,58 @@ public class TowerController : MonoBehaviour
             hasDoubleRangeVolca = true;
         }
     }
+
+    // --- CARTE 15 : Méthode de Vérification ---
+    void CheckSolitaryCondition()
+    {
+        if (tileManager == null) return;
+
+        Tile myTile = GetComponentInParent<Tile>();
+        if (myTile == null) return;
+
+        bool isolated = true;
+        float minDistance = 3.0f; // Distance requise (en cases)
+
+        // Parcours de la grille pour trouver des voisins
+        for (int x = 0; x < tileManager.gridSize; x++)
+        {
+            for (int y = 0; y < tileManager.gridSize; y++)
+            {
+                GameObject tileObj = tileManager.tiles[x, y];
+                if (tileObj == null) continue;
+
+                Tile otherTile = tileObj.GetComponent<Tile>();
+                if (otherTile == myTile) continue; // On s'ignore nous-même
+
+                if (otherTile.HasOccupant)
+                {
+                    // On vérifie si l'occupant est une tour
+                    Transform occupant = otherTile.transform.GetChild(otherTile.transform.childCount - 1);
+                    if (occupant.CompareTag("Tour"))
+                    {
+                        // Calcul distance grille
+                        float dist = Vector2.Distance(new Vector2(myTile.x, myTile.y), new Vector2(x, y));
+                        if (dist < minDistance)
+                        {
+                            isolated = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!isolated) break;
+        }
+
+        // Mise à jour de l'état
+        if (isSolitaryFlameActive != isolated)
+        {
+            isSolitaryFlameActive = isolated;
+            // Optionnel : Feedback console
+            // if (isolated) Debug.Log($"{towerID} : Flamme Solitaire ACTIVE");
+            // else Debug.Log($"{towerID} : Flamme Solitaire DÉSACTIVÉE");
+        }
+    }
+    // ------------------------------------------
 
     // --- SYSTÈME DE VISÉE OPTIMISÉ (3D) ---
     
@@ -625,7 +693,7 @@ public class TowerController : MonoBehaviour
         }
     }
     
-    // --- CARTE 11 : SURCHARGE (AJOUT) ---
+    // --- CARTE 11 ---
     public void ActivateSurcharge(float duration)
     {
         // Si déjà activé, on reset (ou relance)
@@ -643,7 +711,26 @@ public class TowerController : MonoBehaviour
         isSurcharged = false;
         // Optionnel : Revert de la couleur
     }
-    // ------------------------------------
+
+    // --- CARTE 13  ---
+    public void ActivateTwinForge()
+    {
+        if (!hasTwinForge)
+        {
+            hasTwinForge = true;
+            numberOfTargets = 2f; // La tour tirera désormais sur 2 cibles distinctes
+            
+            Debug.Log("Forge Infernale améliorée : Double Cible !");
+        }
+    }
+
+
+
+    public void ActivateSolitaryFlame()
+    {
+        hasSolitaryFlame = true;
+        CheckSolitaryCondition(); // Vérification immédiate
+    }
 
     void panickShot()
     {
@@ -702,7 +789,7 @@ public class TowerController : MonoBehaviour
         attackCooldown = Mathf.Max(0.1f, attackCooldown - amount);
     }
 
-    // --- GIZMOS (DEBUG VISUEL) ---
+    
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

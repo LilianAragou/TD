@@ -321,7 +321,7 @@ MonoBehaviour:
     delayBeforeWave: 2
     duration: 5
   - pairs:
-    - count: 50
+    - count: 5
       prefab: {fileID: 1295372189224343000, guid: baf74254336387f48b045d507fa8cbc5, type: 3}
     - count: 5
       prefab: {fileID: 1295372189224343000, guid: fbb8b0c346bbc344397f48dead225e75, type: 3}

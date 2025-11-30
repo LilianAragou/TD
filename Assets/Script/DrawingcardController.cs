@@ -51,13 +51,26 @@ public class DrawingcardController : MonoBehaviour
     public static bool card10 = false;
     public static bool card10Used = false;
 
-    // --- AJOUT CARTE 11 (Surcharge - Active sur Tour) ---
+    // Carte 11 (Surcharge - Active sur Tour)
     public static bool card11 = false;
     public static float card11Cooldown = 90f; // 1min30
     public static float card11Timer = 0f;     // Timer actuel
     public static float card11Duration = 3f;  // Durée de l'effet
+    
+    // Carte 12 (Passif - Range Volcan)
     public static bool card12 = false;
-    // ----------------------------------------------------
+
+    // Carte 13 (Active - Upgrade Forge)
+    public static bool card13 = false;
+    public static bool card13Used = false;
+
+    // Carte 14 (Passif - Peste Solaire)
+    public static bool card14 = false;
+
+    // --- AJOUT CARTE 15 (Active - Flamme Solitaire) ---
+    public static bool card15 = false;
+    public static bool card15Used = false;
+    // --------------------------------------------------
 
     void Start()
     {
@@ -83,9 +96,16 @@ public class DrawingcardController : MonoBehaviour
         card9 = false; card9Used = false;
         card10 = false; card10Used = false;
 
-        card11 = false;
+        card11 = false; card11Timer = 0f;
         card12 = false;
-        card11Timer = 0f;
+
+        card13 = false; card13Used = false;
+        card14 = false;
+
+        // --- RESET CARTE 15 ---
+        card15 = false;
+        card15Used = false;
+        // ----------------------
 
         card2Timer = 0f;
         card3Used = false;
@@ -165,11 +185,14 @@ public class DrawingcardController : MonoBehaviour
             "8" => new Color(1f, 0.5f, 0f, 1f),     // Orange
             "9" => new Color(0.8f, 0f, 0.8f, 1f),   // Violet clair
             "10" => new Color(1f, 0.84f, 0f, 1f),   // Gold
-            // --- AJOUT : Rouge Vif "Danger" pour la 11 ---
-            "11" => new Color(1f, 0.2f, 0.2f, 1f), 
-            "12" => new Color(0.5f, 0.5f, 0.5f, 1f), 
-            // ---------------------------------------------
-            _ => new Color(0.2f, 0.2f, 0.2f, 1f),   // Gris
+            "11" => new Color(1f, 0.2f, 0.2f, 1f),  // Rouge Vif
+            "12" => new Color(0.5f, 0.5f, 0.5f, 1f),// Gris/Argent
+            "13" => new Color(1f, 0.5f, 0.2f, 1f),  // Orange brulé
+            "14" => new Color(1f, 0.8f, 0.2f, 1f),  // Jaune Solaire
+            // --- AJOUT : Rouge Foncé pour la 15 ---
+            "15" => new Color(0.6f, 0f, 0f, 1f), 
+            // ----------------------------------------
+            _ => new Color(0.2f, 0.2f, 0.2f, 1f),   // Gris par défaut
         };
     }
 
@@ -211,9 +234,12 @@ public class DrawingcardController : MonoBehaviour
             case "8": card8 = true; break;
             case "9": card9 = true; card9Used = false; break;
             case "10": card10 = true; card10Used = false; break;
-            // --- AJOUT CARTE 11 ---
             case "11": card11 = true; break;
             case "12": card12 = true; break;
+            case "13": card13 = true; card13Used = false; break;
+            case "14": card14 = true; break;
+            // --- AJOUT CARTE 15 ---
+            case "15": card15 = true; card15Used = false; break;
             // ----------------------
         }
 
@@ -236,8 +262,8 @@ public class DrawingcardController : MonoBehaviour
                 text.text = cardName;
 
                 // --- GESTION DES CARTES DRAGGABLES ---
-                // On ajoute "11" à la liste des cartes qui ont besoin du script DraggableCard
-                if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" || cardName == "10" || cardName == "11")
+                // Ajout de "15" à la liste
+                if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" || cardName == "10" || cardName == "11" || cardName == "13" || cardName == "15")
                 {
                     if (slot.GetComponent<CanvasGroup>() == null) 
                         slot.AddComponent<CanvasGroup>();
