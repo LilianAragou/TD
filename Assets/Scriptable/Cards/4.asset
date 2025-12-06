@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
+  m_Name: 4
+  m_EditorClassIdentifier: 
+  cardID: 4
+  cardName: Dieu de la foudre
+  cardDescription: Augmente de 15% tout les DMG de foudre
+  lefondelacarte: {fileID: 4227681537323593323, guid: 4027595cddc2c8542b7bbf7c9f9a7439, type: 3}

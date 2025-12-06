@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
+  m_Name: 6
+  m_EditorClassIdentifier: 
+  cardID: 6
+  cardName: Voltage Instable
+  cardDescription: "Les DMG de type foudre ont d\xE9sormais 30% de chance de r\xE9apliquer
+    50% de leur DMG par hit."
+  lefondelacarte: {fileID: 4227681537323593323, guid: 4027595cddc2c8542b7bbf7c9f9a7439, type: 3}

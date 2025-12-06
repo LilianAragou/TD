@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
+  m_Name: 9
+  m_EditorClassIdentifier: 
+  cardID: 9
+  cardName: Tribut des orages
+  cardDescription: "UNIQUE. Cible l'ennemi avec le plus de vie max a l'\xE9cran.
+    L'ennemi cibl\xE9 prendra d\xE9sormais +300% DMG foudre.  "
+  lefondelacarte: {fileID: -8402750088753140246, guid: 56d1db8c615715f4393a1f810fa16dea, type: 3}
