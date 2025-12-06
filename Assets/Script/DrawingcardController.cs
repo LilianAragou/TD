@@ -18,7 +18,12 @@ public class DrawingcardController : MonoBehaviour
     public GameManager gameManager;
     public TextMeshProUGUI rerollbutton;
 
-    // --- VARIABLES STATIQUES (Sauvegardées entre les scènes) ---
+    // --- ZONE DE DEBUG ---
+    [Header("DEBUG CHEAT")]
+    public string debugCardID = "17"; 
+    // ---------------------
+
+    // --- VARIABLES STATIQUES ---
     public static bool card1 = false; // Double Ricochet
     
     // Carte 2 (Orage - Active)
@@ -67,10 +72,17 @@ public class DrawingcardController : MonoBehaviour
     // Carte 14 (Passif - Peste Solaire)
     public static bool card14 = false;
 
-    // --- AJOUT CARTE 15 (Active - Flamme Solitaire) ---
+    // Carte 15 (Active - Flamme Solitaire)
     public static bool card15 = false;
     public static bool card15Used = false;
-    // --------------------------------------------------
+
+    // Carte 16 (Passif - Flamme Maudite)
+    public static bool card16 = false;
+
+    // --- AJOUT CARTE 17 (Active - Incandescence) ---
+    public static bool card17 = false;
+    public static bool card17Used = false;
+    // -----------------------------------------------
 
     void Start()
     {
@@ -90,21 +102,18 @@ public class DrawingcardController : MonoBehaviour
     void ResetStatics()
     {
         card1 = false; card2 = false; card3 = false; card4 = false; card5 = false; card7 = false;
-        
         card6 = false; card6Used = false;
         card8 = false;
         card9 = false; card9Used = false;
         card10 = false; card10Used = false;
-
         card11 = false; card11Timer = 0f;
         card12 = false;
-
         card13 = false; card13Used = false;
         card14 = false;
-
-        // --- RESET CARTE 15 ---
-        card15 = false;
-        card15Used = false;
+        card15 = false; card15Used = false;
+        card16 = false;
+        card17 = false;
+        card17Used = false;
         // ----------------------
 
         card2Timer = 0f;
@@ -113,6 +122,13 @@ public class DrawingcardController : MonoBehaviour
 
     void Update()
     {
+        // --- INPUT DEBUG (Touche M) ---
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            GiveDebugCard(debugCardID);
+        }
+        // ------------------------------
+
         if (Input.GetKeyDown(KeyCode.D))
         {
             if (MenuUI.activeSelf)
@@ -137,11 +153,42 @@ public class DrawingcardController : MonoBehaviour
 
         // Gestion des timers
         if (card2Timer > 0f) card2Timer -= Time.deltaTime;
-
-        // --- TIMER CARTE 11 ---
         if (card11Timer > 0f) card11Timer -= Time.deltaTime;
-        // ----------------------
     }
+
+    // --- FONCTION DE CHEAT ---
+    public void GiveDebugCard(string id)
+    {
+        Debug.Log("CHEAT ACTIVÉ : Don de la carte " + id);
+
+        // 1. Activation des effets (Booléens)
+        switch (id)
+        {
+            case "1": card1 = true; break;
+            case "2": card2 = true; break;
+            case "3": card3 = true; card3Used = false; break;
+            case "4": card4 = true; break;
+            case "5": card5 = true; break;
+            case "6": card6 = true; card6Used = false; break;
+            case "7": card7 = true; break;
+            case "8": card8 = true; break;
+            case "9": card9 = true; card9Used = false; break;
+            case "10": card10 = true; card10Used = false; break;
+            case "11": card11 = true; break;
+            case "12": card12 = true; break;
+            case "13": card13 = true; card13Used = false; break;
+            case "14": card14 = true; break;
+            case "15": card15 = true; card15Used = false; break;
+            case "16": card16 = true; break;
+            case "17": card17 = true; card17Used = false; break;
+            // ----------------
+            default: Debug.LogWarning("ID de carte inconnu : " + id); return;
+        }
+
+        // 2. Ajout visuel dans l'inventaire
+        AddToOwnedCards(id);
+    }
+    // -------------------------
 
     void drawCard(bool reroll)
     {
@@ -189,9 +236,10 @@ public class DrawingcardController : MonoBehaviour
             "12" => new Color(0.5f, 0.5f, 0.5f, 1f),// Gris/Argent
             "13" => new Color(1f, 0.5f, 0.2f, 1f),  // Orange brulé
             "14" => new Color(1f, 0.8f, 0.2f, 1f),  // Jaune Solaire
-            // --- AJOUT : Rouge Foncé pour la 15 ---
-            "15" => new Color(0.6f, 0f, 0f, 1f), 
-            // ----------------------------------------
+            "15" => new Color(0.6f, 0f, 0f, 1f),    // Rouge Foncé
+            "16" => new Color(0.5f, 0f, 0.5f, 1f),  // Violet Maudit
+            "17" => new Color(1f, 1f, 0.4f, 1f), 
+            // ---------------------------------------------
             _ => new Color(0.2f, 0.2f, 0.2f, 1f),   // Gris par défaut
         };
     }
@@ -238,8 +286,9 @@ public class DrawingcardController : MonoBehaviour
             case "12": card12 = true; break;
             case "13": card13 = true; card13Used = false; break;
             case "14": card14 = true; break;
-            // --- AJOUT CARTE 15 ---
             case "15": card15 = true; card15Used = false; break;
+            case "16": card16 = true; break;
+            case "17": card17 = true; card17Used = false; break;
             // ----------------------
         }
 
@@ -262,8 +311,10 @@ public class DrawingcardController : MonoBehaviour
                 text.text = cardName;
 
                 // --- GESTION DES CARTES DRAGGABLES ---
-                // Ajout de "15" à la liste
-                if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" || cardName == "10" || cardName == "11" || cardName == "13" || cardName == "15")
+                
+                if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" || 
+                    cardName == "10" || cardName == "11" || cardName == "13" || cardName == "15" || 
+                    cardName == "17")
                 {
                     if (slot.GetComponent<CanvasGroup>() == null) 
                         slot.AddComponent<CanvasGroup>();

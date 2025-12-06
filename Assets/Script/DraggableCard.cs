@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public string cardID; // "2", "3", "6", "9", "10", "11", "13", "15"
+    public string cardID; // "2", "3", "6", "9", "10", "11", "13", "15", "17"
     
     private Canvas canvas;
     private RectTransform rectTransform;
@@ -124,9 +124,10 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (cardID == "10") return DrawingcardController.card10 && !DrawingcardController.card10Used;
         if (cardID == "11") return DrawingcardController.card11 && DrawingcardController.card11Timer <= 0f;
         if (cardID == "13") return DrawingcardController.card13 && !DrawingcardController.card13Used;
-        
-        // --- CARTE 15 ---
         if (cardID == "15") return DrawingcardController.card15 && !DrawingcardController.card15Used;
+        
+        // --- CARTE 17 ---
+        if (cardID == "17") return DrawingcardController.card17 && !DrawingcardController.card17Used;
         // ----------------
         
         return false;
@@ -172,17 +173,16 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                 }
                 break;
 
-            // --- AJOUT CARTE 15 : FLAMME SOLITAIRE (Système de Grille) ---
+            // --- CARTE 15 : FLAMME SOLITAIRE ---
             case "15":
                 TileManager tm = FindObjectOfType<TileManager>();
-                Tile myTile = tower.GetComponentInParent<Tile>(); // On récupère la tuile sous la tour cible
+                Tile myTile = tower.GetComponentInParent<Tile>();
 
                 if (tm != null && myTile != null)
                 {
                     bool isIsolated = true;
-                    float minDistance = 3.0f; // Distance requise en nombre de tuiles
+                    float minDistance = 3.0f;
 
-                    // On parcourt toute la grille pour vérifier les voisins
                     for (int x = 0; x < tm.gridSize; x++)
                     {
                         for (int y = 0; y < tm.gridSize; y++)
@@ -191,25 +191,18 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                             if (tileObj == null) continue;
 
                             Tile otherTile = tileObj.GetComponent<Tile>();
-                            
-                            // Si c'est ma propre tuile, on ignore
                             if (otherTile == myTile) continue;
 
-                            // Si la tuile a un occupant et que c'est une Tour
                             if (otherTile.HasOccupant)
                             {
-                                // On vérifie si l'occupant est bien une tour (au cas où il y a des obstacles)
                                 Transform occupant = otherTile.transform.GetChild(otherTile.transform.childCount - 1);
                                 if (occupant.CompareTag("Tour"))
                                 {
-                                    // Calcul de distance euclidienne sur la grille
                                     float dist = Vector2.Distance(new Vector2(myTile.x, myTile.y), new Vector2(x, y));
-                                    
                                     if (dist < minDistance)
                                     {
                                         isIsolated = false;
-                                        Debug.Log($"Trop proche ! Tour en ({x}, {y}) à distance {dist}.");
-                                        break; // Pas la peine de continuer, on a trouvé un voisin
+                                        break;
                                     }
                                 }
                             }
@@ -228,12 +221,16 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                         Debug.Log("Condition échouée : La tour n'est pas isolée (Min 3 tuiles).");
                     }
                 }
-                else
-                {
-                    Debug.LogWarning("Erreur : Impossible de trouver le TileManager ou la Tuile de la tour.");
-                }
+                else Debug.LogWarning("Erreur : Impossible de trouver le TileManager ou la Tuile.");
                 break;
-            // -------------------------------------------------------------
+
+            // --- AJOUT CARTE 17 : INCANDESCENCE ---
+            case "17":
+                tower.ActivateIncandescence();
+                DrawingcardController.card17Used = true;
+                Debug.Log($"Incandescence activée sur {tower.towerID} !");
+                break;
+            // -------------------------------------
         }
     }
 

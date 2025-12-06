@@ -96,6 +96,13 @@ public class TowerController : MonoBehaviour
     public bool isSolitaryFlameActive = false; // La condition de distance est respectée (Dynamique)
     // -----------------------------------------
 
+    // --- AJOUT CARTE 17 : INCANDESCENCE ---
+    [Header("Carte 17")]
+    public bool hasIncandescence = false;
+    private int incandescenceStack = 0;
+    private Transform lastTarget = null;
+    // --------------------------------------
+
     void Start()
     {
         isFirstShot = hasAFirstAttack;
@@ -166,6 +173,14 @@ public class TowerController : MonoBehaviour
                 if (distanceToTarget > attackRange || target.gameObject == null)
                 {
                     target = null;
+                    
+                    // --- CARTE 17 : Reset si plus de cible ---
+                    if (hasIncandescence)
+                    {
+                        incandescenceStack = 0;
+                        lastTarget = null;
+                    }
+                    // -----------------------------------------
                 }
                 else if (cooldownTime <= 0f)
                 {
@@ -232,9 +247,6 @@ public class TowerController : MonoBehaviour
         if (isSolitaryFlameActive != isolated)
         {
             isSolitaryFlameActive = isolated;
-            // Optionnel : Feedback console
-            // if (isolated) Debug.Log($"{towerID} : Flamme Solitaire ACTIVE");
-            // else Debug.Log($"{towerID} : Flamme Solitaire DÉSACTIVÉE");
         }
     }
     // ------------------------------------------
@@ -351,6 +363,25 @@ public class TowerController : MonoBehaviour
 
             // --- CALCUL DES DÉGÂTS ---
             float finalDamage = attackDamage;
+
+            // --- CARTE 17 : INCANDESCENCE ---
+            if (hasIncandescence)
+            {
+                if (_target != lastTarget)
+                {
+                    // Changement de cible : Reset
+                    incandescenceStack = 0;
+                    lastTarget = _target;
+                }
+
+                // Bonus : +3% par stack (Stack 0 = 0%)
+                float bonus = 1f + (incandescenceStack * 0.03f);
+                finalDamage *= bonus;
+
+                // Incrément pour le PROCHAIN tir
+                incandescenceStack++;
+            }
+            // --------------------------------
 
             // --- AJOUT CARTE 11 : SURCHARGE ---
             if (isSurcharged)
@@ -693,7 +724,7 @@ public class TowerController : MonoBehaviour
         }
     }
     
-    // --- CARTE 11 ---
+    // --- CARTE 11 : SURCHARGE (AJOUT) ---
     public void ActivateSurcharge(float duration)
     {
         // Si déjà activé, on reset (ou relance)
@@ -712,7 +743,7 @@ public class TowerController : MonoBehaviour
         // Optionnel : Revert de la couleur
     }
 
-    // --- CARTE 13  ---
+    // --- CARTE 13 : TWIN FORGE (AJOUT) ---
     public void ActivateTwinForge()
     {
         if (!hasTwinForge)
@@ -720,17 +751,29 @@ public class TowerController : MonoBehaviour
             hasTwinForge = true;
             numberOfTargets = 2f; // La tour tirera désormais sur 2 cibles distinctes
             
+            // Optionnel : Un petit effet visuel ou log pour confirmer
             Debug.Log("Forge Infernale améliorée : Double Cible !");
         }
     }
+    // ------------------------------------
 
-
-
+    // --- CARTE 15 : FLAMME SOLITAIRE ---
     public void ActivateSolitaryFlame()
     {
         hasSolitaryFlame = true;
         CheckSolitaryCondition(); // Vérification immédiate
     }
+    // -----------------------------------
+
+    // --- CARTE 17 : INCANDESCENCE ---
+    public void ActivateIncandescence()
+    {
+        hasIncandescence = true;
+        incandescenceStack = 0;
+        lastTarget = null;
+        Debug.Log($"Incandescence activée sur {towerID} !");
+    }
+    // --------------------------------
 
     void panickShot()
     {
@@ -789,7 +832,7 @@ public class TowerController : MonoBehaviour
         attackCooldown = Mathf.Max(0.1f, attackCooldown - amount);
     }
 
-    
+    // --- GIZMOS (DEBUG VISUEL) ---
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

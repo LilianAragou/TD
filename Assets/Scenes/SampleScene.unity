@@ -2161,6 +2161,11 @@ MonoBehaviour:
   - 10
   - 11
   - 12
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
   temporaryCards: []
   drawnCards: []
   cardsObjects:
@@ -2183,6 +2188,7 @@ MonoBehaviour:
   MenuUI: {fileID: 8015114938698199959}
   gameManager: {fileID: 1199892219}
   rerollbutton: {fileID: 9089564016440547623}
+  debugCardID: 16
 --- !u!4 &1199892218
 Transform:
   m_ObjectHideFlags: 0
