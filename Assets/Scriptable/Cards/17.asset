@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 17
   m_EditorClassIdentifier: 
-  cardID: 17
+  cardID: 18
   cardName: Fournaise
   cardDescription: Pendant 10s, toute vos tours inflige 20DMG/s de feu dans leur
     range. (CD=1min)

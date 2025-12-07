@@ -10,9 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
-  m_Name: 4
+  m_Name: 21
   m_EditorClassIdentifier: 
-  cardID: 5
-  cardName: Dieu de la foudre
-  cardDescription: Augmente de 15% tout les DMG de foudre
-  lefondelacarte: {fileID: 4227681537323593323, guid: 4027595cddc2c8542b7bbf7c9f9a7439, type: 3}
+  cardID: 21
+  cardName: "Soeur de la temp\xEAte"
+  cardDescription: "Toute les tours Temp\xEAte Jumelles tourneront d\xE9sormais 1.5
+    fois plus vite"
+  lefondelacarte: {fileID: 6158552754357963581, guid: e6d04aaaeba4192408e503eaa6f96e1d, type: 3}

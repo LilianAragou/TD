@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 2
   m_EditorClassIdentifier: 
-  cardID: 2
+  cardID: 3
   cardName: Lien conducteur
   cardDescription: "Se drop sur une tour. Toute les tours du tonerre pr\xE9sente
     dans la range de la tour choisie augmente leur DMG de 30% "

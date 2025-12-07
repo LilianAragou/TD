@@ -67,10 +67,14 @@ public class EnemyController : MonoBehaviour
 
     private Dictionary<string, Coroutine> activeDots = new Dictionary<string, Coroutine>();
 
-    // --- VARIABLES SYNERGIE FEU (Carte 14 & 16) ---
+    // --- VARIABLES SYNERGIE FEU (Carte 14, 16, 19, 20) ---
     private float solarPlagueDurationLeft = 0f; 
-    private bool isTakingDotDamage = false; // Sécurité pour éviter la boucle infinie
-    // ----------------------------------------------
+    private bool isTakingDotDamage = false; 
+    
+    // --- Pour Card 20 ---
+    public bool isBurning = false; 
+    private float burnStatusTimer = 0f;
+    // -------------------
 
     void Awake()
     {
@@ -112,12 +116,16 @@ public class EnemyController : MonoBehaviour
             SkadiShotCalculator = 0f;
         }
 
-        // --- TIMER PESTE SOLAIRE ---
         if (solarPlagueDurationLeft > 0f)
         {
             solarPlagueDurationLeft -= Time.deltaTime;
         }
-        // ---------------------------
+
+        if (burnStatusTimer > 0f)
+        {
+            burnStatusTimer -= Time.deltaTime;
+            if (burnStatusTimer <= 0f) isBurning = false;
+        }
 
         target = Vector3.zero; 
         direction = (target - transform.position).normalized;
@@ -143,6 +151,17 @@ public class EnemyController : MonoBehaviour
         if (DrawingcardController.card5 && type == DamageType.Foudre) damage *= 1.15f;
         if (isLightningMarked && type == DamageType.Foudre) damage *= 4.0f; 
 
+        if (type == DamageType.Feu)
+        {
+            isBurning = true;
+            burnStatusTimer = 0.5f; 
+        }
+
+        if (DrawingcardController.card19 && type == DamageType.Feu && health < (maxHealth * 0.65f))
+        {
+            damage *= 1.30f;
+        }
+
         if (type == DamageType.Feu && isPorteur)
         {
             speed *= 1.5f;
@@ -165,30 +184,22 @@ public class EnemyController : MonoBehaviour
         health -= damage;
         berserkDamage += damage;
 
-        // --- CARTE 14 : PESTE SOLAIRE ---
-        // On déclenche SEULEMENT si ce n'est pas le DoT lui-même qui fait les dégâts
         if (type == DamageType.Feu && DrawingcardController.card14 && !isTakingDotDamage)
         {
             ApplySolarPlague(3f);
         }
-        // --------------------------------
 
-        // --- MORT ---
         if (health <= 0f)
         {
             if (attacker != null) attacker.RegisterKill();
 
-            // --- CARTE 16 : FLAMME MAUDITE (Transfert) ---
-            // Maintenant "type" sera bien "Feu" même si c'est le DoT qui tue
             if (DrawingcardController.card16 && type == DamageType.Feu)
             {
-                // On transfère s'il reste du burn actif
                 if (solarPlagueDurationLeft > 0.1f) 
                 {
                     TransferBurnsToNearest();
                 }
             }
-            // ---------------------------------------------
 
             Die();
             return;
@@ -200,12 +211,36 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    public bool TryExecuteBrasier()
+    {
+        bool sufferingBurn = isBurning || (activeDots.ContainsKey("SolarPlague"));
+        
+        if (sufferingBurn && health < (maxHealth * 0.10f))
+        {
+            Collider[] hits = Physics.OverlapSphere(transform.position, 2.5f);
+            foreach (var hit in hits)
+            {
+                if (hit.gameObject != this.gameObject && hit.CompareTag("Enemy"))
+                {
+                    EnemyController neighbor = hit.GetComponent<EnemyController>();
+                    if (neighbor != null)
+                    {
+                        neighbor.TakeDamage(20f, DamageType.Feu, null);
+                    }
+                }
+            }
+            health = 0;
+            Die();
+            return true;
+        }
+        return false;
+    }
+
     public void ApplyLightningMark()
     {
         isLightningMarked = true;
     }
 
-    // --- SYSTÈME PESTE SOLAIRE ---
     public void ApplySolarPlague(float duration)
     {
         solarPlagueDurationLeft = duration;
@@ -219,29 +254,28 @@ public class EnemyController : MonoBehaviour
 
     private System.Collections.IEnumerator SolarPlagueCoroutine()
     {
-        // On boucle tant qu'il reste du temps (géré dans Update)
-        // Cela permet de ne pas avoir de décalage si la durée est refresh
         float tickTimer = 0f;
 
         while (solarPlagueDurationLeft > 0)
         {
-            yield return null; // Attend la frame suivante
+            yield return null; 
             tickTimer += Time.deltaTime;
 
             if (tickTimer >= 1f)
             {
-                tickTimer = 0f; // Reset timer tick
+                tickTimer = 0f;
 
-                // Calcul dégâts (1% PV Max ou Actuel ? Consigne = Actuel)
                 float burnDamage = health * 0.01f;
                 if (burnDamage < 1f) burnDamage = 1f;
 
-                // --- CRUCIAL : On met le flag à TRUE avant d'infliger les dégâts ---
-                // Cela permet de passer "DamageType.Feu" à TakeDamage SANS re-déclencher ApplySolarPlague
+                if (DrawingcardController.card19 && health < (maxHealth * 0.65f))
+                {
+                    burnDamage *= 1.30f;
+                }
+
                 isTakingDotDamage = true;
-                TakeDamage(burnDamage, DamageType.Feu, null); // On passe FEU pour activer la Carte 16 à la mort
+                TakeDamage(burnDamage, DamageType.Feu, null); 
                 isTakingDotDamage = false;
-                // ------------------------------------------------------------------
             }
         }
         
@@ -251,14 +285,13 @@ public class EnemyController : MonoBehaviour
 
     void TransferBurnsToNearest()
     {
-        // Recherche large (10 unités)
         Collider[] hits = Physics.OverlapSphere(transform.position, 10f); 
         EnemyController bestTarget = null;
         float closestDist = Mathf.Infinity;
 
         foreach (Collider hit in hits)
         {
-            if (hit.gameObject == this.gameObject) continue; // Pas soi-même
+            if (hit.gameObject == this.gameObject) continue; 
             if (hit.CompareTag("Enemy"))
             {
                 float d = Vector3.Distance(transform.position, hit.transform.position);
@@ -272,12 +305,9 @@ public class EnemyController : MonoBehaviour
 
         if (bestTarget != null)
         {
-            // On transfère le temps restant à la cible
-            Debug.Log($"Transfert Flamme Maudite ({solarPlagueDurationLeft.ToString("F1")}s) vers {bestTarget.name}");
             bestTarget.ApplySolarPlague(solarPlagueDurationLeft);
         }
     }
-    // -----------------------------
 
     private void Die()
     {
@@ -397,7 +427,24 @@ public class EnemyController : MonoBehaviour
     public void getKnockBacked(float knockBackDistance, Vector3 knockBackDirection)
     {
         transform.position += knockBackDirection * knockBackDistance;
+
+        // --- AJOUT CARTE 23 : PEUR DES VENTS ---
+        if (DrawingcardController.card23)
+        {
+            // 10 DMG par mètre parcouru
+            float knockbackDamage = knockBackDistance * 10f;
+            TakeDamage(knockbackDamage, DamageType.Air, null);
+        }
+        // ---------------------------------------
     }
+
+    // --- AJOUT CARTE 27 : VENT DU SUD (PULL) ---
+    public void GetPulled(Vector3 pullDirection, float pullSpeed)
+    {
+        // On déplace l'ennemi vers la tour
+        transform.position += pullDirection * pullSpeed * Time.deltaTime;
+    }
+    // -------------------------------------------
     
     public void SetSoldierHeal(int soldierInRange)
     {

@@ -7,8 +7,6 @@ public class DrawingcardController : MonoBehaviour
 {
     public List<CardManger> cardDatas;
 
-
-
     [SerializeField] List<string> cards = new List<string>();
     [SerializeField] List<string> temporaryCards = new List<string>();
     [SerializeField] List<string> drawnCards = new List<string>();
@@ -22,82 +20,65 @@ public class DrawingcardController : MonoBehaviour
     public GameManager gameManager;
     public TextMeshProUGUI rerollbutton;
 
-    // --- ZONE DE DEBUG ---
-    [Header("DEBUG CHEAT")]
-    public string debugCardID = "17";
-    // ---------------------
-
     // --- VARIABLES STATIQUES ---
-    public static bool card1 = false; // Double Ricochet
-
-    // Carte 2 (Orage - Active)
+    public static bool card1 = false; 
     public static bool card2 = false;
-    public static float card2Cooldown = 15f;
+    public static float card2Cooldown = 15f; 
     public static float card2Timer = 0f;
     public static float card2Duration = 15f;
     public static float card2Damage = 20f;
-
-    // Carte 3 (Buff Foudre - Active)
+    
     public static bool card3 = false;
     public static bool card3Used = false;
-
-    public static bool card4 = false; // Stun Boost
-    public static bool card5 = false; // Dmg Foudre +15%
-
-    // Carte 6 (Scaling Speed - Active)
+    public static bool card4 = false; 
+    public static bool card5 = false; 
     public static bool card6 = false;
     public static bool card6Used = false;
-
-    public static bool card7 = false; // Re-proc 30%
-
-    // Carte 8 (Synergie - Passive)
-    public static bool card8 = false;
-
+    public static bool card7 = false; 
+    public static bool card8 = false; 
     public static bool card9 = false;
     public static bool card9Used = false;
-
-    // Carte 10 (Unique - Active Sort Global)
     public static bool card10 = false;
     public static bool card10Used = false;
-
-    // Carte 11 (Surcharge - Active sur Tour)
     public static bool card11 = false;
-    public static float card11Cooldown = 90f; // 1min30
-    public static float card11Timer = 0f;     // Timer actuel
-    public static float card11Duration = 3f;  // Durée de l'effet
-
-    // Carte 12 (Passif - Range Volcan)
+    public static float card11Cooldown = 90f; 
+    public static float card11Timer = 0f;     
+    public static float card11Duration = 3f;  
     public static bool card12 = false;
-
-    // Carte 13 (Active - Upgrade Forge)
     public static bool card13 = false;
     public static bool card13Used = false;
-
-    // Carte 14 (Passif - Peste Solaire)
     public static bool card14 = false;
-
-    // Carte 15 (Active - Flamme Solitaire)
     public static bool card15 = false;
     public static bool card15Used = false;
-
-    // Carte 16 (Passif - Flamme Maudite)
     public static bool card16 = false;
-
-    // --- AJOUT CARTE 17 (Active - Incandescence) ---
     public static bool card17 = false;
     public static bool card17Used = false;
-    // -----------------------------------------------
+    public static bool card18 = false;
+    public static bool card18ActiveEffect = false;
+    public static float card18Cooldown = 60f;
+    public static float card18Timer = 0f;
+    public static float card18Duration = 10f;
+    public static float card18DurationTimer = 0f;
+    public static bool card19 = false;
+    public static bool card20 = false;
+    public static bool card20Used = false;
+    public static bool card23 = false;
+    public static bool card26 = false;
+
+    // --- AJOUT CARTE 27 : VENT DU SUD ---
+    public static bool card27 = false;
+    public static bool card27Used = false;
+    // ------------------------------------
 
     void Start()
     {
         MenuUI.SetActive(false);
-        ResetStatics();
+        ResetStatics(); 
 
         foreach (GameObject slot in ownedCardsObjects)
         {
             Image img = slot.GetComponent<Image>();
             if (img != null) img.color = new Color(0.2f, 0.2f, 0.2f, 1f);
-
             TMP_Text text = slot.GetComponentInChildren<TMP_Text>();
             if (text != null) text.text = "";
         }
@@ -116,9 +97,16 @@ public class DrawingcardController : MonoBehaviour
         card14 = false;
         card15 = false; card15Used = false;
         card16 = false;
-        card17 = false;
-        card17Used = false;
-        // ----------------------
+        card17 = false; card17Used = false;
+        card18 = false; card18Timer = 0f; card18ActiveEffect = false;
+        card19 = false;
+        card20 = false; card20Used = false;
+        card23 = false;
+        card26 = false;
+
+        // --- RESET 27 ---
+        card27 = false; card27Used = false;
+        // ----------------
 
         card2Timer = 0f;
         card3Used = false;
@@ -126,162 +114,47 @@ public class DrawingcardController : MonoBehaviour
 
     void Update()
     {
-        // --- INPUT DEBUG (Touche M) ---
-        if (Input.GetKeyDown(KeyCode.M))
-        {
-            switch (debugCardID)
-            {
-                case "1":
-                    if (!card1)
-                    {
-                        card1 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "2":
-                    if (!card2)
-                    {
-                        card2 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "3":
-                    if (!card3)
-                    {
-                        card3 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "4":
-                    if (!card4)
-                    {
-                        card4 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "5":
-                    if (!card5)
-                    {
-                        card5 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "6":
-                    if (!card6)
-                    {
-                        card6 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "7":
-                    if (!card7)
-                    {
-                        card7 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "8":
-                    if (!card8)
-                    {
-                        card8 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "9":
-                    if (!card9)
-                    {
-                        card9 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "10":
-                    if (!card10)
-                    {
-                        card10 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "11":
-                    if (!card11)
-                    {
-                        card11 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "12":
-                    if (!card12)
-                    {
-                        card12 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "13":
-                    if (!card13)
-                    {
-                        card13 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "14":
-                    if (!card14)
-                    {
-                        card14 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "15":
-                    if (!card15)
-                    {
-                        card15 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "16":
-                    if (!card16)
-                    {
-                        card16 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                case "17":
-                    if (!card17)
-                    {
-                        card17 = true;
-                        AddToOwnedCards(debugCardID);
-                    }
-                    break;
-                default: Debug.LogWarning("ID de carte inconnu : " + debugCardID); return;
-            }
-
-        }
-        // ------------------------------
-
         if (Input.GetKeyDown(KeyCode.D))
         {
-            if (MenuUI.activeSelf)
-            {
-                MenuUI.SetActive(false);
-            }
+            if (MenuUI.activeSelf) MenuUI.SetActive(false);
             else
             {
-                if (drawnCards.Count == 0)
-                {
-                    drawCard(false);
-                }
-                else
-                {
-                    MenuUI.SetActive(true);
-                }
+                if (drawnCards.Count == 0) drawCard(false);
+                else MenuUI.SetActive(true);
             }
         }
 
-        if (rerollbutton)
-            rerollbutton.text = "Reroll = " + rerollCost + "$";
+        if (rerollbutton) rerollbutton.text = "Reroll = " + rerollCost + "$";
 
-        // Gestion des timers
         if (card2Timer > 0f) card2Timer -= Time.deltaTime;
         if (card11Timer > 0f) card11Timer -= Time.deltaTime;
+        if (card18Timer > 0f) card18Timer -= Time.deltaTime;
+        if (card18ActiveEffect)
+        {
+            card18DurationTimer -= Time.deltaTime;
+            if (card18DurationTimer <= 0f) card18ActiveEffect = false;
+        }
     }
+
+    public static void ActivateBrasierSeculaire()
+    {
+        EnemyController[] enemies = FindObjectsOfType<EnemyController>();
+        int execCount = 0;
+        foreach (var enemy in enemies)
+        {
+            if (enemy.TryExecuteBrasier()) execCount++;
+        }
+        Debug.Log($"Brasier Séculaire : {execCount} ennemis exécutés !");
+    }
+
+    public static void ActivateFournaise()
+    {
+        card18ActiveEffect = true;
+        card18DurationTimer = card18Duration;
+        card18Timer = card18Cooldown;
+        Debug.Log("ACTIVATION FOURNAISE : Toutes les tours brûlent les ennemis !");
+    }
+
     void drawCard(bool reroll)
     {
         temporaryCards = new List<string>(cards);
@@ -296,20 +169,18 @@ public class DrawingcardController : MonoBehaviour
                 drawnCards.Add(drawnCard);
                 CardManger data = GetCardByID(drawnCard);
                 CardSlotDisplay display = cardsObjects[i].GetComponent<CardSlotDisplay>();
-                display.SetCardData (data);
+                if(display) display.SetCardData(data);
                 temporaryCards.RemoveAt(randomIndex);
             }
             else
             {
                 drawnCards.Add("EMPTY");
                 CardSlotDisplay display = cardsObjects[i].GetComponent<CardSlotDisplay>();
-                display.SetCardData(null);
+                if(display) display.SetCardData(null);
             }
         }
-
         MenuUI.SetActive(true);
     }
-
 
     public void rerollCard()
     {
@@ -324,19 +195,13 @@ public class DrawingcardController : MonoBehaviour
     public void IChooseCard(float cardIndex)
     {
         int index = (int)cardIndex;
-
         if (index < 0 || index >= drawnCards.Count) return;
 
         string chosen = drawnCards[index];
-
         if (chosen == "EMPTY") return;
 
-        if (cards.Contains(chosen))
-        {
-            cards.Remove(chosen);
-        }
+        if (cards.Contains(chosen)) cards.Remove(chosen);
 
-        // Activation des effets
         switch (chosen)
         {
             case "1": card1 = true; break;
@@ -356,12 +221,17 @@ public class DrawingcardController : MonoBehaviour
             case "15": card15 = true; card15Used = false; break;
             case "16": card16 = true; break;
             case "17": card17 = true; card17Used = false; break;
-                // ----------------------
+            case "18": card18 = true; break;
+            case "19": card19 = true; break;
+            case "20": card20 = true; card20Used = false; break;
+            case "23": card23 = true; break;
+            case "26": card26 = true; break;
+            // --- AJOUT 27 ---
+            case "27": card27 = true; card27Used = false; break;
+            // ----------------
         }
 
         AddToOwnedCards(chosen);
-
-        // Auto-reroll
         drawCard(false);
         MenuUI.SetActive(false);
     }
@@ -371,28 +241,22 @@ public class DrawingcardController : MonoBehaviour
         foreach (GameObject slot in ownedCardsObjects)
         {
             TMP_Text text = slot.GetComponentInChildren<TMP_Text>();
-
             if (text != null && string.IsNullOrEmpty(text.text))
             {
                 text.text = cardName;
-
-                // --- GESTION DES CARTES DRAGGABLES ---
-
-                if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" ||
-                    cardName == "10" || cardName == "11" || cardName == "13" || cardName == "15" ||
-                    cardName == "17")
+                
+                // Ajout de "27"
+                if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" || 
+                    cardName == "10" || cardName == "11" || cardName == "13" || cardName == "15" || 
+                    cardName == "17" || cardName == "18" || cardName == "20" || cardName == "27")
                 {
-                    if (slot.GetComponent<CanvasGroup>() == null)
+                    if (slot.GetComponent<CanvasGroup>() == null) 
                         slot.AddComponent<CanvasGroup>();
 
                     var existingDrag = slot.GetComponent<DraggableCard>();
-                    if (existingDrag == null)
-                    {
-                        existingDrag = slot.AddComponent<DraggableCard>();
-                    }
+                    if (existingDrag == null) existingDrag = slot.AddComponent<DraggableCard>();
                     existingDrag.cardID = cardName;
                 }
-
                 return;
             }
         }
@@ -400,15 +264,12 @@ public class DrawingcardController : MonoBehaviour
 
     public static bool TryActivateCard10()
     {
-        // 1. Trouver tous les ennemis
         EnemyController[] enemies = FindObjectsOfType<EnemyController>();
-
         if (enemies.Length == 0) return false;
 
         EnemyController bestTarget = null;
         float highestMaxHP = -1f;
 
-        // 2. Chercher celui avec le plus de MaxHealth
         foreach (EnemyController enemy in enemies)
         {
             if (enemy.maxHealth > highestMaxHP)
@@ -418,24 +279,54 @@ public class DrawingcardController : MonoBehaviour
             }
         }
 
-        // 3. Appliquer l'effet
         if (bestTarget != null)
         {
             bestTarget.ApplyLightningMark();
-            return true; // Succès
+            return true; 
         }
-
         return false;
     }
-    CardManger GetCardByID(string id)
+
+    Color getColor(string cardName)
     {
-    foreach (var c in cardDatas) 
-    {
-        if (c.cardID == id)
-            return c;
-    }
-    Debug.LogWarning("Carte introuvable : " + id);
-    return null;
+        return cardName switch
+        {
+            "1" => new Color(1f, 0f, 0f, 1f),
+            "2" => new Color(0f, 1f, 0f, 1f),
+            "3" => new Color(0f, 0f, 1f, 1f),
+            "4" => new Color(1f, 1f, 0f, 1f),
+            "5" => new Color(1f, 0f, 1f, 1f),
+            "6" => new Color(0f, 1f, 1f, 1f),
+            "7" => new Color(0.5f, 0f, 0.5f, 1f),
+            "8" => new Color(1f, 0.5f, 0f, 1f),
+            "9" => new Color(0.8f, 0f, 0.8f, 1f),
+            "10" => new Color(1f, 0.84f, 0f, 1f),
+            "11" => new Color(1f, 0.2f, 0.2f, 1f),
+            "12" => new Color(0.5f, 0.5f, 0.5f, 1f),
+            "13" => new Color(1f, 0.5f, 0.2f, 1f),
+            "14" => new Color(1f, 0.8f, 0.2f, 1f),
+            "15" => new Color(0.6f, 0f, 0f, 1f),
+            "16" => new Color(0.5f, 0f, 0.5f, 1f),
+            "17" => new Color(1f, 1f, 0.4f, 1f),
+            "18" => new Color(1f, 0.27f, 0f, 1f),
+            "19" => new Color(0.7f, 0f, 0f, 1f),
+            "20" => new Color(0.4f, 0f, 0f, 1f),
+            "23" => new Color(0f, 1f, 1f, 1f),
+            "26" => new Color(0.8f, 1f, 1f, 1f),
+            // --- AJOUT 27 : Cyan Vif ---
+            "27" => new Color(0.6f, 1f, 0.8f, 1f),
+            // ---------------------------
+            _ => new Color(0.2f, 0.2f, 0.2f, 1f),
+        };
     }
 
+    CardManger GetCardByID(string id)
+    {
+        foreach (var c in cardDatas) 
+        {
+            if (c.cardID == id) return c;
+        }
+        Debug.LogWarning("Carte introuvable : " + id);
+        return null;
+    }
 }

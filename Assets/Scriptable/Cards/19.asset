@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 19
   m_EditorClassIdentifier: 
-  cardID: 19
+  cardID: 20
   cardName: "Brasier s\xE9culaire"
   cardDescription: "UNIQUE. Les ennemis subissant un burn actuellement sont ex\xE9cut\xE9
     s'ils sont en dessous de 10% HP et explose en une petite AOE infligeant 20DMG

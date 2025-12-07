@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 7
   m_EditorClassIdentifier: 
-  cardID: 7
+  cardID: 8
   cardName: "Tandem des \xE9clair"
   cardDescription: "Quand 2 totem de foudre sont sur des cases adja\xE7entes, leur
     DMG augmente de 25%"

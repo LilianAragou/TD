@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 8
   m_EditorClassIdentifier: 
-  cardID: 8
+  cardID: 9
   cardName: Electrique courant
   cardDescription: Se drop sur une tour. Si la tour contient moins de 10 ennemis
     dans sa range, elle infligera 20DMG electrique par hit en plus.

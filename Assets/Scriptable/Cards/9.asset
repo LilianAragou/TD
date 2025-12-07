@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 9
   m_EditorClassIdentifier: 
-  cardID: 9
+  cardID: 10
   cardName: Tribut des orages
   cardDescription: "UNIQUE. Cible l'ennemi avec le plus de vie max a l'\xE9cran.
     L'ennemi cibl\xE9 prendra d\xE9sormais +300% DMG foudre.  "

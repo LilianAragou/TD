@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public string cardID; // "2", "3", "6", "9", "10", "11", "13", "15", "17"
+    public string cardID; // "2", "3", "6", "9", "10", "11", "13", "15", "17", "18", "20", "27"
     
     private Canvas canvas;
     private RectTransform rectTransform;
@@ -93,7 +93,23 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             ResetCard();
             return;
         }
-        // ------------------------------------------
+
+        // --- CAS SPÉCIAL CARTE 18 (Sort Global - Fournaise) ---
+        if (cardID == "18")
+        {
+            DrawingcardController.ActivateFournaise();
+            ResetCard(); 
+            return;
+        }
+
+        // --- CAS SPÉCIAL CARTE 20 (Sort Global) ---
+        if (cardID == "20")
+        {
+            DrawingcardController.ActivateBrasierSeculaire();
+            DrawingcardController.card20Used = true; 
+            ResetCard();
+            return;
+        }
 
         // Raycast 3D pour trouver une tour sous la souris
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -125,9 +141,12 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (cardID == "11") return DrawingcardController.card11 && DrawingcardController.card11Timer <= 0f;
         if (cardID == "13") return DrawingcardController.card13 && !DrawingcardController.card13Used;
         if (cardID == "15") return DrawingcardController.card15 && !DrawingcardController.card15Used;
-        
-        // --- CARTE 17 ---
         if (cardID == "17") return DrawingcardController.card17 && !DrawingcardController.card17Used;
+        if (cardID == "18") return DrawingcardController.card18 && DrawingcardController.card18Timer <= 0f;
+        if (cardID == "20") return DrawingcardController.card20 && !DrawingcardController.card20Used;
+        
+        // --- CARTE 27 ---
+        if (cardID == "27") return DrawingcardController.card27 && !DrawingcardController.card27Used;
         // ----------------
         
         return false;
@@ -173,8 +192,7 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                 }
                 break;
 
-            // --- CARTE 15 : FLAMME SOLITAIRE ---
-            case "15":
+            case "15": // Flamme Solitaire
                 TileManager tm = FindObjectOfType<TileManager>();
                 Tile myTile = tower.GetComponentInParent<Tile>();
 
@@ -224,13 +242,19 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                 else Debug.LogWarning("Erreur : Impossible de trouver le TileManager ou la Tuile.");
                 break;
 
-            // --- AJOUT CARTE 17 : INCANDESCENCE ---
-            case "17":
+            case "17": // Incandescence
                 tower.ActivateIncandescence();
                 DrawingcardController.card17Used = true;
                 Debug.Log($"Incandescence activée sur {tower.towerID} !");
                 break;
-            // -------------------------------------
+
+            // --- AJOUT CARTE 27 : VENT DU SUD ---
+            case "27":
+                tower.ActivateSouthWind();
+                DrawingcardController.card27Used = true;
+                Debug.Log($"Vent du Sud activé sur {tower.towerID} !");
+                break;
+            // ------------------------------------
         }
     }
 

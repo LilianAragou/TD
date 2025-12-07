@@ -92,8 +92,8 @@ public class TowerController : MonoBehaviour
 
     // --- AJOUT CARTE 15 : FLAMME SOLITAIRE ---
     [Header("Carte 15")]
-    public bool hasSolitaryFlame = false;      // La carte est équipée sur la tour
-    public bool isSolitaryFlameActive = false; // La condition de distance est respectée (Dynamique)
+    public bool hasSolitaryFlame = false;
+    public bool isSolitaryFlameActive = false; 
     // -----------------------------------------
 
     // --- AJOUT CARTE 17 : INCANDESCENCE ---
@@ -102,6 +102,16 @@ public class TowerController : MonoBehaviour
     private int incandescenceStack = 0;
     private Transform lastTarget = null;
     // --------------------------------------
+
+    // --- AJOUT CARTE 18 : FOURNAISE (Timer local) ---
+    private float fournaiseTimer = 0f;
+    // ------------------------------------------------
+
+    // --- AJOUT CARTE 27 : VENT DU SUD ---
+    [Header("Carte 27")]
+    public bool hasSouthWind = false;
+    public float southWindPullForce = 0.4f; // AJOUT : Variable modifiable dans l'inspecteur !
+    // ------------------------------------
 
     void Start()
     {
@@ -126,6 +136,26 @@ public class TowerController : MonoBehaviour
             ApplyFoudreBufferToNeighbors();
         }
 
+        // --- LOGIQUE CARTE 18 : FOURNAISE (Active Globalement) ---
+        if (DrawingcardController.card18ActiveEffect)
+        {
+            fournaiseTimer -= Time.deltaTime;
+            // On applique les dégâts toutes les 0.5s pour éviter le spam
+            if (fournaiseTimer <= 0f)
+            {
+                ApplyFournaiseDamage();
+                fournaiseTimer = 0.5f; 
+            }
+        }
+        // ---------------------------------------------------------
+
+        // --- LOGIQUE CARTE 27 : VENT DU SUD (Attraction continue) ---
+        if (hasSouthWind)
+        {
+            HandleSouthWindPull();
+        }
+        // ------------------------------------------------------------
+
         // --- LOGIQUE CARTE 8 & 15 (Check Voisins via Grille) ---
         // Exécuté une fois par seconde pour optimiser
         adjacencyCheckTimer -= Time.deltaTime;
@@ -140,8 +170,14 @@ public class TowerController : MonoBehaviour
             if (hasElectriqueCourant)
             {
                 Collider[] hits = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
-                if (hits.Length >= 10) electriqueCourantActivated = true;
-                else electriqueCourantActivated = false;
+                if (hits.Length >= 10)
+                {
+                    electriqueCourantActivated = true;
+                }
+                else
+                {
+                    electriqueCourantActivated = false;
+                }
             }
 
             // --- CARTE 15 : Vérification Dynamique ---
@@ -201,6 +237,60 @@ public class TowerController : MonoBehaviour
             hasDoubleRangeVolca = true;
         }
     }
+
+    // --- CARTE 27 : Logique d'Attraction ---
+    public void ActivateSouthWind()
+    {
+        hasSouthWind = true;
+        Debug.Log($"Vent du Sud actif sur {towerID}");
+    }
+
+    void HandleSouthWindPull()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
+        foreach (var hit in hits)
+        {
+            if (hit.CompareTag(enemyTag))
+            {
+                EnemyController enemy = hit.GetComponent<EnemyController>();
+                if (enemy != null)
+                {
+                    // Direction : Ennemi -> Tour
+                    Vector3 pullDir = (transform.position - enemy.transform.position).normalized;
+                    pullDir.y = 0; // Pas de mouvement vertical
+                    
+                    // Vitesse d'attraction : utilise la variable publique
+                    enemy.GetPulled(pullDir, southWindPullForce);
+                }
+            }
+        }
+    }
+    // ---------------------------------------
+
+    // --- CARTE 18 : MÉTHODE FOURNAISE ---
+    void ApplyFournaiseDamage()
+    {
+        // 20 DMG/s sur 0.5s = 10 DMG/tick
+        float dmgPerTick = 10f; 
+
+        // La surcharge (Carte 11) booste TOUS les dégâts de la tour, donc aussi la Fournaise
+        if (isSurcharged) dmgPerTick *= 11f;
+
+        Collider[] hits = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
+        foreach (Collider hit in hits)
+        {
+            if (hit.CompareTag(enemyTag))
+            {
+                EnemyController enemy = hit.GetComponent<EnemyController>();
+                if (enemy != null)
+                {
+                    // Type Feu pour activer Peste Solaire (14) et Flamme Maudite (16)
+                    enemy.TakeDamage(dmgPerTick, DamageType.Feu, this);
+                }
+            }
+        }
+    }
+    // ------------------------------------
 
     // --- CARTE 15 : Méthode de Vérification ---
     void CheckSolitaryCondition()
@@ -456,7 +546,12 @@ public class TowerController : MonoBehaviour
                         Vector3 pushDir = (bestTarget.position - transform.position).normalized;
                         pushDir.y = 0; 
                         
-                        enemyHealth.getKnockBacked(3f, pushDir);
+                        // --- CARTE 26 : SOUFFLE DIVIN (+30% Knockback) ---
+                        float kbForce = 3f;
+                        if (DrawingcardController.card26) kbForce *= 1.3f;
+                        // -------------------------------------------------
+
+                        enemyHealth.getKnockBacked(kbForce, pushDir);
 
                         // On lance le cooldown seulement si on a tiré
                         cooldownTime = attackCooldown;

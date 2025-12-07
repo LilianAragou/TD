@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 11
   m_EditorClassIdentifier: 
-  cardID: 11
+  cardID: 12
   cardName: Terrain Ardent
   cardDescription: Double la range de toute les tours Volcanique
   lefondelacarte: {fileID: 7573431860771156521, guid: 9a80972501ed6b4428c0d01a6bf3b268, type: 3}

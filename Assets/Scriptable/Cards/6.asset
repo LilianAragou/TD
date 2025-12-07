@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 6
   m_EditorClassIdentifier: 
-  cardID: 6
+  cardID: 7
   cardName: Voltage Instable
   cardDescription: "Les DMG de type foudre ont d\xE9sormais 30% de chance de r\xE9apliquer
     50% de leur DMG par hit."
