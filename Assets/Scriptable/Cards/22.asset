@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 22
   m_EditorClassIdentifier: 
-  cardID: 21
-  cardName: "Soeur de la temp\xEAte"
-  cardDescription: "Toute les tours Temp\xEAte Jumelles tourneront d\xE9sormais 1.5
-    fois plus vite"
+  cardID: 23
+  cardName: Peur des Vents
+  cardDescription: "Les ennemis repouss\xE9 prendront d\xE9sormais des DMG en fonction
+    de la distance inverse parcourue a cause du repoussement(10DMG/m\xE8tre )"
   lefondelacarte: {fileID: 6158552754357963581, guid: e6d04aaaeba4192408e503eaa6f96e1d, type: 3}

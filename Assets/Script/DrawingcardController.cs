@@ -62,13 +62,29 @@ public class DrawingcardController : MonoBehaviour
     public static bool card19 = false;
     public static bool card20 = false;
     public static bool card20Used = false;
+    public static bool card21 = false;
+    public static bool card22 = false;
+    public static bool card22Used = false;
     public static bool card23 = false;
+    public static bool card24 = false;
+    public static float card24Cooldown = 45f;
+    public static float card24Timer = 0f;
+    public static float card24Duration = 15f;
     public static bool card26 = false;
-
-    // --- AJOUT CARTE 27 : VENT DU SUD ---
     public static bool card27 = false;
     public static bool card27Used = false;
-    // ------------------------------------
+    public static bool card30 = false;
+    private float card30Timer = 0f;
+    private float card30Interval = 7f;
+
+    // --- AJOUT CARTE 29 : OEIL ET VISION ---
+    public static bool card29 = false;
+    public static bool card29ActiveEffect = false; // Effet en cours ?
+    public static float card29Cooldown = 120f;     // 2 minutes
+    public static float card29Timer = 0f;          // Timer CD
+    public static float card29Duration = 30f;      // Durée 30s
+    public static float card29DurationTimer = 0f;  // Timer durée
+    // ---------------------------------------
 
     void Start()
     {
@@ -101,11 +117,16 @@ public class DrawingcardController : MonoBehaviour
         card18 = false; card18Timer = 0f; card18ActiveEffect = false;
         card19 = false;
         card20 = false; card20Used = false;
+        card21 = false;
+        card22 = false; card22Used = false;
         card23 = false;
+        card24 = false; card24Timer = 0f;
         card26 = false;
-
-        // --- RESET 27 ---
         card27 = false; card27Used = false;
+        card30 = false; card30Timer = 0f;
+
+        // --- RESET 29 ---
+        card29 = false; card29Timer = 0f; card29ActiveEffect = false;
         // ----------------
 
         card2Timer = 0f;
@@ -134,6 +155,61 @@ public class DrawingcardController : MonoBehaviour
             card18DurationTimer -= Time.deltaTime;
             if (card18DurationTimer <= 0f) card18ActiveEffect = false;
         }
+
+        if (card24Timer > 0f) card24Timer -= Time.deltaTime;
+
+        if (card30)
+        {
+            card30Timer -= Time.deltaTime;
+            if (card30Timer <= 0f)
+            {
+                ActivateOdinCyclone();
+                card30Timer = card30Interval;
+            }
+        }
+
+        // --- TIMER CARTE 29 ---
+        if (card29Timer > 0f) card29Timer -= Time.deltaTime;
+
+        if (card29ActiveEffect)
+        {
+            card29DurationTimer -= Time.deltaTime;
+            if (card29DurationTimer <= 0f)
+            {
+                card29ActiveEffect = false;
+                Debug.Log("Fin de Oeil et Vision (Carte 29)");
+            }
+        }
+        // ----------------------
+    }
+
+    public static void ActivateEyeAndVision()
+    {
+        card29ActiveEffect = true;
+        card29DurationTimer = card29Duration; // 30s
+        card29Timer = card29Cooldown;         // 120s
+        Debug.Log("ACTIVATION OEIL ET VISION : Portée augmentée !");
+    }
+
+    void ActivateOdinCyclone()
+    {
+        GameObject nexus = GameObject.FindGameObjectWithTag("Nexus");
+        if (nexus == null) return;
+        float cycloneRadius = 6f;
+        Collider[] hits = Physics.OverlapSphere(nexus.transform.position, cycloneRadius);
+        foreach (var hit in hits)
+        {
+            if (hit.CompareTag("Enemy"))
+            {
+                EnemyController enemy = hit.GetComponent<EnemyController>();
+                if (enemy != null)
+                {
+                    Vector3 pushDir = (enemy.transform.position - nexus.transform.position).normalized;
+                    pushDir.y = 0;
+                    enemy.getKnockBacked(6f, pushDir);
+                }
+            }
+        }
     }
 
     public static void ActivateBrasierSeculaire()
@@ -144,7 +220,6 @@ public class DrawingcardController : MonoBehaviour
         {
             if (enemy.TryExecuteBrasier()) execCount++;
         }
-        Debug.Log($"Brasier Séculaire : {execCount} ennemis exécutés !");
     }
 
     public static void ActivateFournaise()
@@ -224,11 +299,16 @@ public class DrawingcardController : MonoBehaviour
             case "18": card18 = true; break;
             case "19": card19 = true; break;
             case "20": card20 = true; card20Used = false; break;
+            case "21": card21 = true; break;
+            case "22": card22 = true; card22Used = false; break;
             case "23": card23 = true; break;
+            case "24": card24 = true; break;
             case "26": card26 = true; break;
-            // --- AJOUT 27 ---
             case "27": card27 = true; card27Used = false; break;
+            // --- AJOUT 29 ---
+            case "29": card29 = true; break;
             // ----------------
+            case "30": card30 = true; break;
         }
 
         AddToOwnedCards(chosen);
@@ -245,10 +325,12 @@ public class DrawingcardController : MonoBehaviour
             {
                 text.text = cardName;
                 
-                // Ajout de "27"
+                // --- GESTION DES CARTES DRAGGABLES ---
+                // Ajout de "29"
                 if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" || 
                     cardName == "10" || cardName == "11" || cardName == "13" || cardName == "15" || 
-                    cardName == "17" || cardName == "18" || cardName == "20" || cardName == "27")
+                    cardName == "17" || cardName == "18" || cardName == "20" || cardName == "22" || 
+                    cardName == "24" || cardName == "27" || cardName == "29")
                 {
                     if (slot.GetComponent<CanvasGroup>() == null) 
                         slot.AddComponent<CanvasGroup>();
@@ -266,10 +348,8 @@ public class DrawingcardController : MonoBehaviour
     {
         EnemyController[] enemies = FindObjectsOfType<EnemyController>();
         if (enemies.Length == 0) return false;
-
         EnemyController bestTarget = null;
         float highestMaxHP = -1f;
-
         foreach (EnemyController enemy in enemies)
         {
             if (enemy.maxHealth > highestMaxHP)
@@ -278,7 +358,6 @@ public class DrawingcardController : MonoBehaviour
                 bestTarget = enemy;
             }
         }
-
         if (bestTarget != null)
         {
             bestTarget.ApplyLightningMark();
@@ -311,11 +390,16 @@ public class DrawingcardController : MonoBehaviour
             "18" => new Color(1f, 0.27f, 0f, 1f),
             "19" => new Color(0.7f, 0f, 0f, 1f),
             "20" => new Color(0.4f, 0f, 0f, 1f),
+            "21" => new Color(0.6f, 0.8f, 1f, 1f),
+            "22" => new Color(0f, 1f, 1f, 1f),
             "23" => new Color(0f, 1f, 1f, 1f),
+            "24" => new Color(0.1f, 0.1f, 0.8f, 1f),
             "26" => new Color(0.8f, 1f, 1f, 1f),
-            // --- AJOUT 27 : Cyan Vif ---
             "27" => new Color(0.6f, 1f, 0.8f, 1f),
-            // ---------------------------
+            // --- AJOUT 29 : Bleu Ciel Divin ---
+            "29" => new Color(0.5f, 0.8f, 1f, 1f),
+            // ----------------------------------
+            "30" => new Color(0.9f, 0.9f, 1f, 1f),
             _ => new Color(0.2f, 0.2f, 0.2f, 1f),
         };
     }

@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 24
   m_EditorClassIdentifier: 
-  cardID: 21
-  cardName: "Soeur de la temp\xEAte"
-  cardDescription: "Toute les tours Temp\xEAte Jumelles tourneront d\xE9sormais 1.5
-    fois plus vite"
-  lefondelacarte: {fileID: 6158552754357963581, guid: e6d04aaaeba4192408e503eaa6f96e1d, type: 3}
+  cardID: 25
+  cardName: "B\xE9n\xE9diction du p\xE8re"
+  cardDescription: Permet de convertir les DMG de la tour de son choix en n'importe
+    quel autre type de DMG
+  lefondelacarte: {fileID: 825960921964325679, guid: f477ce686be16ce47bdc0520eba2d4ac, type: 3}

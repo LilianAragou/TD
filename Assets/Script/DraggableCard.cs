@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public string cardID; // "2", "3", "6", "9", "10", "11", "13", "15", "17", "18", "20", "27"
+    public string cardID; // "2", "3", "6", "9", "10", "11", "13", "15", "17", "18", "20", "22", "24", "27", "29"
     
     private Canvas canvas;
     private RectTransform rectTransform;
@@ -111,6 +111,15 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             return;
         }
 
+        // --- CAS SPÉCIAL CARTE 29 (Sort Global - Oeil et Vision) ---
+        if (cardID == "29")
+        {
+            DrawingcardController.ActivateEyeAndVision();
+            ResetCard(); 
+            return;
+        }
+        // -----------------------------------------------------------
+
         // Raycast 3D pour trouver une tour sous la souris
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit))
@@ -144,9 +153,12 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (cardID == "17") return DrawingcardController.card17 && !DrawingcardController.card17Used;
         if (cardID == "18") return DrawingcardController.card18 && DrawingcardController.card18Timer <= 0f;
         if (cardID == "20") return DrawingcardController.card20 && !DrawingcardController.card20Used;
-        
-        // --- CARTE 27 ---
+        if (cardID == "22") return DrawingcardController.card22 && !DrawingcardController.card22Used;
+        if (cardID == "24") return DrawingcardController.card24 && DrawingcardController.card24Timer <= 0f;
         if (cardID == "27") return DrawingcardController.card27 && !DrawingcardController.card27Used;
+        
+        // --- CARTE 29 ---
+        if (cardID == "29") return DrawingcardController.card29 && DrawingcardController.card29Timer <= 0f;
         // ----------------
         
         return false;
@@ -248,13 +260,23 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                 Debug.Log($"Incandescence activée sur {tower.towerID} !");
                 break;
 
-            // --- AJOUT CARTE 27 : VENT DU SUD ---
-            case "27":
+            case "22": // Vent du Nord
+                tower.ActivateNorthWind();
+                DrawingcardController.card22Used = true;
+                Debug.Log($"Vent du Nord activé sur {tower.towerID} !");
+                break;
+
+            case "24": // Oeil d'Odin
+                tower.ActivateOdinAttackSpeed(DrawingcardController.card24Duration);
+                DrawingcardController.card24Timer = DrawingcardController.card24Cooldown;
+                Debug.Log($"Oeil d'Odin activé sur {tower.towerID} !");
+                break;
+
+            case "27": // Vent du Sud
                 tower.ActivateSouthWind();
                 DrawingcardController.card27Used = true;
-                Debug.Log($"Vent du Sud activé sur {tower.towerID} !");
+                Debug.Log($"Vent du Sud actif sur {tower.towerID} !");
                 break;
-            // ------------------------------------
         }
     }
 

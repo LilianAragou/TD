@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
   m_Name: 28
   m_EditorClassIdentifier: 
-  cardID: 21
-  cardName: "Soeur de la temp\xEAte"
-  cardDescription: "Toute les tours Temp\xEAte Jumelles tourneront d\xE9sormais 1.5
-    fois plus vite"
-  lefondelacarte: {fileID: 6158552754357963581, guid: e6d04aaaeba4192408e503eaa6f96e1d, type: 3}
+  cardID: 29
+  cardName: Oeil et vision
+  cardDescription: "Pendant 30s toute vos tours gagne 30% de port\xE9e (les tours
+    d'Odin gagne 60%) (CD = 2min)"
+  lefondelacarte: {fileID: 825960921964325679, guid: f477ce686be16ce47bdc0520eba2d4ac, type: 3}

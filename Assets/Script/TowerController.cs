@@ -110,8 +110,26 @@ public class TowerController : MonoBehaviour
     // --- AJOUT CARTE 27 : VENT DU SUD ---
     [Header("Carte 27")]
     public bool hasSouthWind = false;
-    public float southWindPullForce = 0.4f; // AJOUT : Variable modifiable dans l'inspecteur !
+    public float southWindPullForce = 0.2f; 
     // ------------------------------------
+
+    // --- AJOUT CARTE 21 : SOEUR DE LA TEMPÊTE ---
+    private bool isCard21Applied = false;
+    // --------------------------------------------
+
+    // --- AJOUT CARTE 22 : VENT DU NORD ---
+    [Header("Carte 22")]
+    public bool hasNorthWind = false;
+    // -------------------------------------
+
+    // --- AJOUT CARTE 24 : OEIL D'ODIN ---
+    [Header("Carte 24")]
+    public bool isOdinBoosted = false; // Vitesse d'attaque doublée
+    // ------------------------------------
+
+    // --- AJOUT CARTE 29 : OEIL ET VISION ---
+    private bool isCard29Applied = false;
+    // ---------------------------------------
 
     void Start()
     {
@@ -155,6 +173,55 @@ public class TowerController : MonoBehaviour
             HandleSouthWindPull();
         }
         // ------------------------------------------------------------
+
+        // --- LOGIQUE CARTE 21 : SOEUR DE LA TEMPÊTE (TwinWind Speed) ---
+        if (DrawingcardController.card21 && !isCard21Applied && towerID == "TwinWind")
+        {
+            // On augmente la vitesse de base de la tour
+            projectileSpeed *= 1.5f;
+            
+            // On applique immédiatement cette nouvelle vitesse aux projectiles déjà existants
+            foreach (GameObject proj in auraProjectiles)
+            {
+                if (proj != null)
+                {
+                    PojectileController pc = proj.GetComponent<PojectileController>();
+                    if (pc != null)
+                    {
+                        pc.speed = projectileSpeed;
+                    }
+                }
+            }
+            
+            isCard21Applied = true;
+            Debug.Log("Soeur de la tempête activée : TwinWind x1.5 vitesse !");
+        }
+        // ---------------------------------------------------------------
+
+        // --- LOGIQUE CARTE 29 : OEIL ET VISION (Boost Portée Global Temporaire) ---
+        if (DrawingcardController.card29ActiveEffect)
+        {
+            if (!isCard29Applied)
+            {
+                // Appliquer le boost
+                float multiplier = IsOdinTower() ? 1.6f : 1.3f; // +60% Odin, +30% autres
+                attackRange *= multiplier;
+                isCard29Applied = true;
+                UpdateRangeVisual();
+            }
+        }
+        else
+        {
+            if (isCard29Applied)
+            {
+                // Retirer le boost (on divise par le même montant pour revenir à la normale)
+                float multiplier = IsOdinTower() ? 1.6f : 1.3f;
+                attackRange /= multiplier;
+                isCard29Applied = false;
+                UpdateRangeVisual();
+            }
+        }
+        // --------------------------------------------------------------------------
 
         // --- LOGIQUE CARTE 8 & 15 (Check Voisins via Grille) ---
         // Exécuté une fois par seconde pour optimiser
@@ -221,7 +288,14 @@ public class TowerController : MonoBehaviour
                 else if (cooldownTime <= 0f)
                 {
                     AttackTarget();
-                    cooldownTime = attackCooldown;
+                    
+                    // --- MODIFICATION CARTE 24 ---
+                    // Si boosté, on divise le cooldown par 2 (donc tire 2x plus vite)
+                    float currentCD = attackCooldown;
+                    if (isOdinBoosted) currentCD /= 2f;
+
+                    cooldownTime = currentCD;
+                    // -----------------------------
                 }
             }
         }
@@ -237,6 +311,31 @@ public class TowerController : MonoBehaviour
             hasDoubleRangeVolca = true;
         }
     }
+
+    // --- CARTE 29 : Helper Function ---
+    bool IsOdinTower()
+    {
+        // Liste des tours affiliées à Odin / Thor / Asgard
+        return towerID == "OdinEye" || 
+               towerID == "ThorTotem" || 
+               towerID == "ThorHammer" || 
+               towerID == "ThorPillar" || 
+               towerID == "WindTotem" || 
+               towerID == "TwinWind";
+    }
+    // ----------------------------------
+
+    // --- CARTE 22 : Logique d'activation Vent du Nord ---
+    public void ActivateNorthWind()
+    {
+        if (!hasNorthWind)
+        {
+            attackRange *= 2f; // Double la portée
+            hasNorthWind = true;
+            UpdateRangeVisual(); // Met à jour le cercle visuel
+        }
+    }
+    // ---------------------------------------------------
 
     // --- CARTE 27 : Logique d'Attraction ---
     public void ActivateSouthWind()
@@ -340,6 +439,24 @@ public class TowerController : MonoBehaviour
         }
     }
     // ------------------------------------------
+
+    // --- CARTE 24 : Activation du Boost ---
+    public void ActivateOdinAttackSpeed(float duration)
+    {
+        StopCoroutine("OdinSpeedRoutine"); // Reset si déjà actif
+        StartCoroutine(OdinSpeedRoutine(duration));
+    }
+
+    private IEnumerator OdinSpeedRoutine(float duration)
+    {
+        isOdinBoosted = true;
+        // Feedback visuel optionnel : Changement de couleur ?
+        
+        yield return new WaitForSeconds(duration);
+        
+        isOdinBoosted = false;
+    }
+    // --------------------------------------
 
     // --- SYSTÈME DE VISÉE OPTIMISÉ (3D) ---
     
@@ -619,7 +736,11 @@ public class TowerController : MonoBehaviour
                         }
                     }
                 }
-                cooldownTime = attackCooldown; 
+                // --- MODIFICATION CARTE 24 ---
+                float currentCD = attackCooldown;
+                if (isOdinBoosted) currentCD /= 2f;
+                cooldownTime = currentCD;
+                // -----------------------------
             }
             return; 
         }
@@ -681,7 +802,11 @@ public class TowerController : MonoBehaviour
                     EnemyController enemy = hit.GetComponent<EnemyController>();
                     if (enemy != null) enemy.TakeDamage(stockedDamage, dmgType, this);
                 }
-                cooldownTime = attackCooldown;
+                // --- MODIFICATION CARTE 24 ---
+                float currentCD = attackCooldown;
+                if (isOdinBoosted) currentCD /= 2f;
+                cooldownTime = currentCD;
+                // -----------------------------
                 stockedDamage = 0f;
             }
         }
@@ -869,6 +994,8 @@ public class TowerController : MonoBehaviour
         Debug.Log($"Incandescence activée sur {towerID} !");
     }
     // --------------------------------
+
+    
 
     void panickShot()
     {
