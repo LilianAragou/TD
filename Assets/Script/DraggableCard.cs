@@ -111,6 +111,15 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             return;
         }
 
+        // --- CAS SPÉCIAL CARTE 28 (Sort Global) ---
+        if (cardID == "28")
+        {
+            DrawingcardController.ActivateCorbeauDuPere();
+            DrawingcardController.card28Used = true; 
+            ResetCard();
+            return;
+        }
+
         // --- CAS SPÉCIAL CARTE 29 (Sort Global - Oeil et Vision) ---
         if (cardID == "29")
         {
@@ -155,7 +164,9 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (cardID == "20") return DrawingcardController.card20 && !DrawingcardController.card20Used;
         if (cardID == "22") return DrawingcardController.card22 && !DrawingcardController.card22Used;
         if (cardID == "24") return DrawingcardController.card24 && DrawingcardController.card24Timer <= 0f;
+        if (cardID == "25") return DrawingcardController.card25 && !DrawingcardController.card25Used;
         if (cardID == "27") return DrawingcardController.card27 && !DrawingcardController.card27Used;
+        if (cardID == "28") return DrawingcardController.card28 && !DrawingcardController.card28Used;
         
         // --- CARTE 29 ---
         if (cardID == "29") return DrawingcardController.card29 && DrawingcardController.card29Timer <= 0f;
@@ -269,6 +280,12 @@ public class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             case "24": // Oeil d'Odin
                 tower.ActivateOdinAttackSpeed(DrawingcardController.card24Duration);
                 DrawingcardController.card24Timer = DrawingcardController.card24Cooldown;
+                Debug.Log($"Oeil d'Odin activé sur {tower.towerID} !");
+                break;
+
+            case "25": // Oeil d'Odin
+                tower.ActivateBenedictionDuPere();
+                DrawingcardController.card25Used = true;
                 Debug.Log($"Oeil d'Odin activé sur {tower.towerID} !");
                 break;
 

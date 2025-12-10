@@ -22,6 +22,7 @@ public class TowerController : MonoBehaviour
     public GameObject projectilePrefab;
     public GameObject rangeaura;
     public GameObject auraProjectilePrefab;
+    public GameObject typeSelectionUI;
 
     [Header("Comportements")]
     public bool hasAFirstAttack = false;
@@ -1080,5 +1081,37 @@ public class TowerController : MonoBehaviour
         if (rangeaura == null) return;
         float finalSize = attackRange * 2f * rangeVisualMultiplier;
         rangeaura.transform.localScale = new Vector3(finalSize, 0.1f, finalSize);
+    }
+    public void ActivateBenedictionDuPere()
+    {
+        typeSelectionUI.SetActive(true);
+    }
+    public void ChangeDamageType(string newType)
+    {
+        if (newType == "Feu")
+        {
+            dmgType = DamageType.Feu;
+        }
+        else if (newType == "Foudre")
+        {
+            dmgType = DamageType.Foudre;
+        }
+        else if (newType == "Snow")
+        {
+            dmgType = DamageType.Snow;
+        }
+        else if (newType == "Terre")
+        {
+            dmgType = DamageType.Terre;
+        }
+        else if (newType == "Necrotique")
+        {
+            dmgType = DamageType.Necrotique;
+        }
+        else if (newType == "Air")
+        {
+            dmgType = DamageType.Air;
+        }
+        typeSelectionUI.SetActive(false);
     }
 }

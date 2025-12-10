@@ -70,9 +70,13 @@ public class DrawingcardController : MonoBehaviour
     public static float card24Cooldown = 45f;
     public static float card24Timer = 0f;
     public static float card24Duration = 15f;
+    public static bool card25 = false;
+    public static bool card25Used = false;
     public static bool card26 = false;
     public static bool card27 = false;
     public static bool card27Used = false;
+    public static bool card28 = false;
+    public static bool card28Used = false;
     public static bool card30 = false;
     private float card30Timer = 0f;
     private float card30Interval = 7f;
@@ -102,31 +106,55 @@ public class DrawingcardController : MonoBehaviour
 
     void ResetStatics()
     {
-        card1 = false; card2 = false; card3 = false; card4 = false; card5 = false; card7 = false;
-        card6 = false; card6Used = false;
+        card1 = false; 
+        card2 = false; 
+        card3 = false; 
+        card4 = false;
+        card5 = false; 
+        card7 = false;
+        card6 = false; 
+        card6Used = false;
         card8 = false;
-        card9 = false; card9Used = false;
-        card10 = false; card10Used = false;
-        card11 = false; card11Timer = 0f;
+        card9 = false; 
+        card9Used = false;
+        card10 = false; 
+        card10Used = false;
+        card11 = false; 
+        card11Timer = 0f;
         card12 = false;
-        card13 = false; card13Used = false;
+        card13 = false; 
+        card13Used = false;
         card14 = false;
-        card15 = false; card15Used = false;
+        card15 = false; 
+        card15Used = false;
         card16 = false;
-        card17 = false; card17Used = false;
-        card18 = false; card18Timer = 0f; card18ActiveEffect = false;
+        card17 = false; 
+        card17Used = false;
+        card18 = false; 
+        card18Timer = 0f; card18ActiveEffect = false;
         card19 = false;
-        card20 = false; card20Used = false;
+        card20 = false; 
+        card20Used = false;
         card21 = false;
-        card22 = false; card22Used = false;
+        card22 = false; 
+        card22Used = false;
         card23 = false;
-        card24 = false; card24Timer = 0f;
+        card24 = false; 
+        card24Timer = 0f;
+        card25 = false; 
+        card25Used = false; 
         card26 = false;
-        card27 = false; card27Used = false;
-        card30 = false; card30Timer = 0f;
+        card27 = false; 
+        card27Used = false;
+        card28 = false; 
+        card28Used = false; 
+        card30 = false; 
+        card30Timer = 0f;
 
         // --- RESET 29 ---
-        card29 = false; card29Timer = 0f; card29ActiveEffect = false;
+        card29 = false; 
+        card29Timer = 0f; 
+        card29ActiveEffect = false;
         // ----------------
 
         card2Timer = 0f;
@@ -229,6 +257,11 @@ public class DrawingcardController : MonoBehaviour
         card18Timer = card18Cooldown;
         Debug.Log("ACTIVATION FOURNAISE : Toutes les tours brûlent les ennemis !");
     }
+    public static void ActivateCorbeauDuPere()
+    {
+        
+    }
+
 
     void drawCard(bool reroll)
     {
@@ -303,8 +336,11 @@ public class DrawingcardController : MonoBehaviour
             case "22": card22 = true; card22Used = false; break;
             case "23": card23 = true; break;
             case "24": card24 = true; break;
+            case "25": card25 = true; card25Used = false; break;
             case "26": card26 = true; break;
             case "27": card27 = true; card27Used = false; break;
+            case "28": card28 = true; card28Used = false; break;
+
             // --- AJOUT 29 ---
             case "29": card29 = true; break;
             // ----------------
@@ -330,7 +366,8 @@ public class DrawingcardController : MonoBehaviour
                 if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" || 
                     cardName == "10" || cardName == "11" || cardName == "13" || cardName == "15" || 
                     cardName == "17" || cardName == "18" || cardName == "20" || cardName == "22" || 
-                    cardName == "24" || cardName == "27" || cardName == "29")
+                    cardName == "24" || cardName == "25" || cardName == "27" || cardName == "28" || 
+                    cardName == "29")
                 {
                     if (slot.GetComponent<CanvasGroup>() == null) 
                         slot.AddComponent<CanvasGroup>();
@@ -394,8 +431,10 @@ public class DrawingcardController : MonoBehaviour
             "22" => new Color(0f, 1f, 1f, 1f),
             "23" => new Color(0f, 1f, 1f, 1f),
             "24" => new Color(0.1f, 0.1f, 0.8f, 1f),
+            "25" => new Color(0.1f, 0.1f, 0.8f, 1f),
             "26" => new Color(0.8f, 1f, 1f, 1f),
             "27" => new Color(0.6f, 1f, 0.8f, 1f),
+            "28" => new Color(0.1f, 0.1f, 0.8f, 1f),
             // --- AJOUT 29 : Bleu Ciel Divin ---
             "29" => new Color(0.5f, 0.8f, 1f, 1f),
             // ----------------------------------

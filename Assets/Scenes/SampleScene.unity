@@ -949,7 +949,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a8919d2ef0285d84abf967a12be38951, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1
+      value: -9.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a8919d2ef0285d84abf967a12be38951, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3008,7 +3008,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 683abc79dfb112041a7aff4198948e52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  money: 0
+  money: 1000000
   text: {fileID: 1639022335}
 --- !u!1 &1224411424
 GameObject:
