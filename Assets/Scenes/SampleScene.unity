@@ -2928,6 +2928,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 01cc80736ac3f2d4b92ab5cee4a9c239, type: 2}
   - {fileID: 11400000, guid: 6f602f846b219c54582ed43fe821ff72, type: 2}
   - {fileID: 11400000, guid: eaef07a548f808b47a2d5cd5dd0a77e6, type: 2}
+  - {fileID: 11400000, guid: 375fd96cac67330479d7d551b58b69cd, type: 2}
+  - {fileID: 11400000, guid: 5f49c276f0f953d4a830114dee1a2d92, type: 2}
+  - {fileID: 11400000, guid: 5ce2f989ea52dc840a635d77bd9533fc, type: 2}
+  - {fileID: 11400000, guid: c262b4c104271874d89bf83fc720b170, type: 2}
+  - {fileID: 11400000, guid: 84d5dd9973a014f4bbd9bd2e6a5ec9c3, type: 2}
+  - {fileID: 11400000, guid: cc8988e915022b5478974e963a0d0b43, type: 2}
+  - {fileID: 11400000, guid: 30a0961e1ee05134b81e2c1dbe813047, type: 2}
+  - {fileID: 11400000, guid: 2fe1b8e284e01b34f9fc5f20b66b1e52, type: 2}
+  - {fileID: 11400000, guid: 6b45da69e75910049bf226746abebb30, type: 2}
+  - {fileID: 11400000, guid: a99d0d1d70b7beb47a858b1616ecd722, type: 2}
+  - {fileID: 11400000, guid: 83ad955a9cfb3e744afc0933f7fd9f04, type: 2}
   cards:
   - 1
   - 2
@@ -2959,6 +2970,36 @@ MonoBehaviour:
   - 28
   - 29
   - 30
+  - 31
+  - 32
+  - 33
+  - 34
+  - 35
+  - 36
+  - 37
+  - 38
+  - 39
+  - 40
+  - 41
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  - 47
+  - 48
+  - 49
+  - 50
+  - 51
+  - 52
+  - 53
+  - 54
+  - 55
+  - 56
+  - 57
+  - 58
+  - 59
+  - 60
   temporaryCards: []
   drawnCards: []
   cardsObjects:

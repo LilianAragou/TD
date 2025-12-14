@@ -94,6 +94,9 @@ public class EnemyController : MonoBehaviour
     {
         float currentSpeed = speed;
 
+        // Variable pour cumuler les dégâts de froid de cette frame
+        float skadiDotDamage = 0f;
+
         for (int i = activeSlows.Count - 1; i >= 0; i--)
         {
             activeSlows[i].timeLeft -= Time.deltaTime;
@@ -102,13 +105,40 @@ public class EnemyController : MonoBehaviour
                 activeSlows.RemoveAt(i);
                 continue;
             }
+            
+            // Application du ralentissement
             currentSpeed *= 1f - activeSlows[i].amount / 100f;
             if (currentSpeed < speed * 0.1f)
                 currentSpeed = speed * 0.1f; 
+
+            // --- CARTE 31 : BAISER ARCTIQUE ---
+            // Si la carte est active
+            if (DrawingcardController.card31)
+            {
+                // Si le ralentissement vient d'une tour "Skadi" (nom contient Skadi)
+                if (activeSlows[i].towerID.Contains("Skadi"))
+                {
+                    // Calcul des dégâts : (% Slow / 2) par seconde
+                    // Ex: 40% slow => 20 dégâts/s => 20 * deltaTime pour cette frame
+                    float dmgPerSecond = activeSlows[i].amount / 2f;
+                    skadiDotDamage += dmgPerSecond * Time.deltaTime;
+                }
+            }
+            // ----------------------------------
+        }
+
+        // Appliquer les dégâts de Baiser Arctique
+        if (skadiDotDamage > 0f)
+        {
+            // On utilise type Snow (Glace)
+            TakeDamage(skadiDotDamage, DamageType.Snow, null);
         }
 
         secretSpeed = currentSpeed;
-        if (isStunned) secretSpeed = 0f;
+        if (isStunned)
+        {
+            secretSpeed = 0f;
+        }
 
         if (SkadiShotCalculator >= 3f) 
         {
@@ -428,24 +458,19 @@ public class EnemyController : MonoBehaviour
     {
         transform.position += knockBackDirection * knockBackDistance;
 
-        // --- AJOUT CARTE 23 : PEUR DES VENTS ---
+        // --- CARTE 23 : PEUR DES VENTS ---
         if (DrawingcardController.card23)
         {
-            // 10 DMG par mètre parcouru
             float knockbackDamage = knockBackDistance * 10f;
             TakeDamage(knockbackDamage, DamageType.Air, null);
         }
-        // ---------------------------------------
     }
-
-    // --- AJOUT CARTE 27 : VENT DU SUD (PULL) ---
+    
     public void GetPulled(Vector3 pullDirection, float pullSpeed)
     {
-        // On déplace l'ennemi vers la tour
         transform.position += pullDirection * pullSpeed * Time.deltaTime;
     }
-    // -------------------------------------------
-    
+
     public void SetSoldierHeal(int soldierInRange)
     {
         float healAmount = soldierInRange * 10f * Time.deltaTime;

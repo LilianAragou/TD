@@ -70,25 +70,31 @@ public class DrawingcardController : MonoBehaviour
     public static float card24Cooldown = 45f;
     public static float card24Timer = 0f;
     public static float card24Duration = 15f;
+    
     public static bool card25 = false;
     public static bool card25Used = false;
+
     public static bool card26 = false;
     public static bool card27 = false;
     public static bool card27Used = false;
+    
     public static bool card28 = false;
     public static bool card28Used = false;
+
+    public static bool card29 = false;
+    public static bool card29ActiveEffect = false; 
+    public static float card29Cooldown = 120f;     
+    public static float card29Timer = 0f;          
+    public static float card29Duration = 30f;      
+    public static float card29DurationTimer = 0f;
+
     public static bool card30 = false;
     private float card30Timer = 0f;
     private float card30Interval = 7f;
 
-    // --- AJOUT CARTE 29 : OEIL ET VISION ---
-    public static bool card29 = false;
-    public static bool card29ActiveEffect = false; // Effet en cours ?
-    public static float card29Cooldown = 120f;     // 2 minutes
-    public static float card29Timer = 0f;          // Timer CD
-    public static float card29Duration = 30f;      // Durée 30s
-    public static float card29DurationTimer = 0f;  // Timer durée
-    // ---------------------------------------
+    // --- AJOUT CARTE 31 : BAISER ARCTIQUE ---
+    public static bool card31 = false;
+    // ----------------------------------------
 
     void Start()
     {
@@ -106,55 +112,34 @@ public class DrawingcardController : MonoBehaviour
 
     void ResetStatics()
     {
-        card1 = false; 
-        card2 = false; 
-        card3 = false; 
-        card4 = false;
-        card5 = false; 
-        card7 = false;
-        card6 = false; 
-        card6Used = false;
+        card1 = false; card2 = false; card3 = false; card4 = false; card5 = false; card7 = false;
+        card6 = false; card6Used = false;
         card8 = false;
-        card9 = false; 
-        card9Used = false;
-        card10 = false; 
-        card10Used = false;
-        card11 = false; 
-        card11Timer = 0f;
+        card9 = false; card9Used = false;
+        card10 = false; card10Used = false;
+        card11 = false; card11Timer = 0f;
         card12 = false;
-        card13 = false; 
-        card13Used = false;
+        card13 = false; card13Used = false;
         card14 = false;
-        card15 = false; 
-        card15Used = false;
+        card15 = false; card15Used = false;
         card16 = false;
-        card17 = false; 
-        card17Used = false;
-        card18 = false; 
-        card18Timer = 0f; card18ActiveEffect = false;
+        card17 = false; card17Used = false;
+        card18 = false; card18Timer = 0f; card18ActiveEffect = false;
         card19 = false;
-        card20 = false; 
-        card20Used = false;
+        card20 = false; card20Used = false;
         card21 = false;
-        card22 = false; 
-        card22Used = false;
+        card22 = false; card22Used = false;
         card23 = false;
-        card24 = false; 
-        card24Timer = 0f;
-        card25 = false; 
-        card25Used = false; 
+        card24 = false; card24Timer = 0f;
+        card25 = false; card25Used = false;
         card26 = false;
-        card27 = false; 
-        card27Used = false;
-        card28 = false; 
-        card28Used = false; 
-        card30 = false; 
-        card30Timer = 0f;
+        card27 = false; card27Used = false;
+        card28 = false; card28Used = false;
+        card29 = false; card29Timer = 0f; card29ActiveEffect = false;
+        card30 = false; card30Timer = 0f;
 
-        // --- RESET 29 ---
-        card29 = false; 
-        card29Timer = 0f; 
-        card29ActiveEffect = false;
+        // --- RESET 31 ---
+        card31 = false;
         // ----------------
 
         card2Timer = 0f;
@@ -196,9 +181,7 @@ public class DrawingcardController : MonoBehaviour
             }
         }
 
-        // --- TIMER CARTE 29 ---
         if (card29Timer > 0f) card29Timer -= Time.deltaTime;
-
         if (card29ActiveEffect)
         {
             card29DurationTimer -= Time.deltaTime;
@@ -208,14 +191,13 @@ public class DrawingcardController : MonoBehaviour
                 Debug.Log("Fin de Oeil et Vision (Carte 29)");
             }
         }
-        // ----------------------
     }
 
     public static void ActivateEyeAndVision()
     {
         card29ActiveEffect = true;
-        card29DurationTimer = card29Duration; // 30s
-        card29Timer = card29Cooldown;         // 120s
+        card29DurationTimer = card29Duration; 
+        card29Timer = card29Cooldown;         
         Debug.Log("ACTIVATION OEIL ET VISION : Portée augmentée !");
     }
 
@@ -257,11 +239,14 @@ public class DrawingcardController : MonoBehaviour
         card18Timer = card18Cooldown;
         Debug.Log("ACTIVATION FOURNAISE : Toutes les tours brûlent les ennemis !");
     }
+
+    // --- RESTAURATION DE LA MÉTHODE MANQUANTE ---
     public static void ActivateCorbeauDuPere()
     {
-        
+        // Logique à implémenter plus tard si nécessaire, 
+        // mais la méthode doit exister pour DraggableCard.cs
     }
-
+    // --------------------------------------------
 
     void drawCard(bool reroll)
     {
@@ -340,11 +325,11 @@ public class DrawingcardController : MonoBehaviour
             case "26": card26 = true; break;
             case "27": card27 = true; card27Used = false; break;
             case "28": card28 = true; card28Used = false; break;
-
-            // --- AJOUT 29 ---
             case "29": card29 = true; break;
-            // ----------------
             case "30": card30 = true; break;
+            // --- AJOUT 31 ---
+            case "31": card31 = true; break;
+            // ----------------
         }
 
         AddToOwnedCards(chosen);
@@ -361,8 +346,7 @@ public class DrawingcardController : MonoBehaviour
             {
                 text.text = cardName;
                 
-                // --- GESTION DES CARTES DRAGGABLES ---
-                // Ajout de "29"
+                // La 31 est passive, non draggable
                 if (cardName == "2" || cardName == "3" || cardName == "6" || cardName == "9" || 
                     cardName == "10" || cardName == "11" || cardName == "13" || cardName == "15" || 
                     cardName == "17" || cardName == "18" || cardName == "20" || cardName == "22" || 
@@ -435,10 +419,11 @@ public class DrawingcardController : MonoBehaviour
             "26" => new Color(0.8f, 1f, 1f, 1f),
             "27" => new Color(0.6f, 1f, 0.8f, 1f),
             "28" => new Color(0.1f, 0.1f, 0.8f, 1f),
-            // --- AJOUT 29 : Bleu Ciel Divin ---
             "29" => new Color(0.5f, 0.8f, 1f, 1f),
-            // ----------------------------------
             "30" => new Color(0.9f, 0.9f, 1f, 1f),
+            // --- AJOUT 31 : Cyan Pâle ---
+            "31" => new Color(0.7f, 1f, 1f, 1f),
+            // ----------------------------
             _ => new Color(0.2f, 0.2f, 0.2f, 1f),
         };
     }

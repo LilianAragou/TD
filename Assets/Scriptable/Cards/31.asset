@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e390d54b22b70564f8c069728d9c7c10, type: 3}
+  m_Name: 31
+  m_EditorClassIdentifier: 
+  cardID: 32
+  cardName: Haleine du froid
+  cardDescription: "Les tours de Skadi inflige 100% de DMG en moins. Augmente les
+    slow  inflig\xE9 a tout les ennemis toute sources confondue de 50%"
+  lefondelacarte: {fileID: 6742998454795571059, guid: d415064967f43a349a45fa4cf1a21e6b, type: 3}
