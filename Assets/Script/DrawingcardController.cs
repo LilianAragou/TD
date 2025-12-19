@@ -80,6 +80,9 @@ public class DrawingcardController : MonoBehaviour
     
     public static bool card28 = false;
     public static bool card28Used = false;
+    public static bool isCorbeauDuPereActive = false;
+    private static int selectedTowersCount = 0;
+    private static List<TowerController> selectedTowers = new List<TowerController>();
 
     public static bool card29 = false;
     public static bool card29ActiveEffect = false; 
@@ -170,6 +173,10 @@ public class DrawingcardController : MonoBehaviour
         }
 
         if (card24Timer > 0f) card24Timer -= Time.deltaTime;
+        if (isCorbeauDuPereActive && Input.GetMouseButtonDown(0))
+        {
+            DetectTowerClick();
+        }
 
         if (card30)
         {
@@ -243,10 +250,80 @@ public class DrawingcardController : MonoBehaviour
     // --- RESTAURATION DE LA MÉTHODE MANQUANTE ---
     public static void ActivateCorbeauDuPere()
     {
-        // Logique à implémenter plus tard si nécessaire, 
-        // mais la méthode doit exister pour DraggableCard.cs
+        if (isCorbeauDuPereActive) return; // éviter double activation
+        isCorbeauDuPereActive = true;
+        selectedTowersCount = 0;
+        selectedTowers.Clear();
+
+        Debug.Log("Corbeau du Père activé : cliquez sur 2 tours à lier !");
     }
     // --------------------------------------------
+    void DetectTowerClick()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            if (hit.collider.CompareTag("Tour"))
+            {
+                GameObject tower = hit.collider.gameObject;
+
+                if (!selectedTowers.Contains(tower.GetComponent<TowerController>()))
+                {
+                    selectedTowers.Add(tower.GetComponent<TowerController>());
+                    selectedTowersCount++;
+                    Debug.Log("Tour sélectionnée (" + selectedTowersCount + "/2) : " + tower.name);
+
+                    // Exemple : effet visuel temporaire
+                    /*Renderer rend = tower.GetComponentInChildren<Renderer>();
+                    if (rend != null)
+                        rend.material.color = Color.cyan;*/
+                }
+
+                // Si deux tours sélectionnées, on arrête
+                if (selectedTowersCount >= 2)
+                {
+                    isCorbeauDuPereActive = false;
+                    Debug.Log("Deux tours sélectionnées. Corbeau du Père terminé !");
+                    OnCorbeauDuPereFinished();
+                }
+            }
+        }
+    }
+    void OnCorbeauDuPereFinished()
+    {
+        // Ici, tu peux faire ce que tu veux avec les deux tours choisies.
+        // Exemple :
+        if (selectedTowers.Count == 2)
+        {
+            TowerController towerA = selectedTowers[0];
+            TowerController towerB = selectedTowers[1];
+            float damageA = towerB.attackDamage * 0.05f;
+            float damageB = towerA.attackDamage * 0.05f;
+
+
+            towerA.attackDamage += damageA;
+            towerB.attackDamage += damageB;
+            float ABonus = 1 / towerB.attackCooldown * 0.05f;
+            float BBonus = 1 / towerA.attackCooldown * 0.05f;
+            float cooldownA = 1 / ((1 / towerA.attackCooldown) + ABonus);
+            float cooldownB = 1 / ((1 / towerB.attackCooldown) + BBonus);
+            towerA.attackCooldown = cooldownA;
+            towerB.attackCooldown = cooldownB;
+            if (towerA.attackCooldown < 0.1f)
+            {
+                towerA.attackCooldown = 0.1f;
+            }
+            if (towerB.attackCooldown < 0.1f)
+            {
+                towerB.attackCooldown = 0.1f;
+            }
+            Debug.Log("Tours liées : " + towerA.name + " et " + towerB.name);
+            // Tu peux ici lancer un effet spécial, un buff partagé, etc.
+        }
+
+        selectedTowers.Clear();
+    }
+
 
     void drawCard(bool reroll)
     {
